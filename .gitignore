@@ -130,4 +130,7 @@ cython_debug/
 .idea/
 
 # Chats
-chats/*
+chats/
+
+# Config
+config/
