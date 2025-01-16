@@ -1,10 +1,12 @@
 import sys
 import os
 import json
+import time
 from langchain.schema import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
-from Local_LLM_Handler import Local_LLM_Handler 
-from Chat import Chat
+from classes.Local_LLM_Handler import Local_LLM_Handler 
+from classes.Chat import Chat
+import time
         
 
 def main():
@@ -29,6 +31,7 @@ def main():
     print("Type 'exit' to quit the application.\n")
     
     while True:
+        time.sleep(0.5)
         try:
             # Get user input
             user_input = chat.get_user_input()

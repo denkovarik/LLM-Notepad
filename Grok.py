@@ -3,8 +3,8 @@ import os
 import json
 from langchain.schema import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
-from Grok_Handler import Grok_Handler 
-from Chat import Chat
+from classes.Grok_Handler import Grok_Handler 
+from classes.Chat import Chat
         
 
 def main():

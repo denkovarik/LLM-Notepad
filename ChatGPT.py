@@ -3,8 +3,8 @@ import os
 import json
 from langchain.schema import HumanMessage, AIMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
-from ChatGPT_Handler import ChatGPT_Handler 
-from Chat import Chat
+from classes.ChatGPT_Handler import ChatGPT_Handler 
+from classes.Chat import Chat
         
 
 def main():
