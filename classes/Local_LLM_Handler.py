@@ -3,7 +3,7 @@ from yaspin import yaspin
 from langchain.schema import AIMessage, HumanMessage, BaseMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 from typing import List, Optional
-from LLM_Handler import LLM_Handler
+from .LLM_Handler import LLM_Handler
 
 class Local_LLM_Handler(LLM_Handler):
     """

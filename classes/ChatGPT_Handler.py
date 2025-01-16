@@ -4,7 +4,7 @@ from langchain.schema import AIMessage, HumanMessage, BaseMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 from typing import List, Optional
 from openai import OpenAI
-from LLM_Handler import LLM_Handler
+from .LLM_Handler import LLM_Handler
 
 
 class ChatGPT_Handler(LLM_Handler):
