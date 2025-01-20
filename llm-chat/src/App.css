@@ -56,11 +56,13 @@ body {
   margin-bottom: 10px;
   padding: 5px 10px;
   border-radius: 10px;
+  white-space: pre-wrap;   /* preserves newlines and wraps text */
+  word-wrap: break-word;   /* breaks long words */
 }
 
 .message.user {
   background-color: #dcf8c6;
-  text-align: right;
+  text-align: left;
 }
 
 .message.user.dark-mode {
@@ -70,6 +72,8 @@ body {
 .message.bot {
   background-color: #e5e5ea;
   text-align: left;
+  white-space: pre-wrap;   /* preserves newlines and wraps text */
+  word-wrap: break-word;   /* breaks long words */
 }
 
 .message.bot.dark-mode {
