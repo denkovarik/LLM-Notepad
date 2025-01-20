@@ -2,40 +2,89 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import ollama
+import os, json
+
 from classes.Local_LLM_Handler import Local_LLM_Handler
 from classes.Grok_Handler import Grok_Handler
-from classes.ChatGPT_Handler import ChatGPT_Handler 
+from classes.ChatGPT_Handler import ChatGPT_Handler
 from classes.Chat import Chat
+from pydantic import BaseModel
+
+CHATS_DIR = "./chats"
+ONLINE_MODELS = ["Grok", "ChatGPT"]
+
+class AppState:
+    def __init__(self):
+        self.active_model = "llama2:latest"
+        self.llm_handler = None
+        self.chat = Chat(None)
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-ONLINE_MODELS = ['Grok', 'ChatGPT']
+app.state.state = AppState()
 
-def load_model(model_name: str):
+class CreateChatRequest(BaseModel):
+    name: str
+
+@app.post("/api/chats")
+def create_chat(request: CreateChatRequest):
     """
-    If Ollama requires an explicit load step, do it here. Otherwise, we just track model_name globally.
-    For demonstration, we only store it in `ACTIVE_MODEL`.
+    Creates a new chat file named <user-chosen-name>.json
+    Returns { "chat_id": "<filename>.json" }
     """
-    global ACTIVE_MODEL
-    global LLM_HANDLER
-    ACTIVE_MODEL = model_name
-    if ACTIVE_MODEL == 'Grok':
-        LLM_HANDLER = Grok_Handler()
-    elif ACTIVE_MODEL == 'ChatGPT':
-        LLM_HANDLER = ChatGPT_Handler()
-    else:
-        LLM_HANDLER = Local_LLM_Handler(model_name=ACTIVE_MODEL)
-    print(f"Active model set to: {model_name}")
+    if not os.path.exists(CHATS_DIR):
+        os.makedirs(CHATS_DIR)
+
+    # Clean up user name if you want to remove spaces or special characters
+    chat_name = request.name.strip().replace(" ", "_").replace("/", "_")
+    chat_filename = f"{chat_name}.json"  # directly use that name as filename
+    file_path = os.path.join(CHATS_DIR, chat_filename)
+    
+    cnt = 1 
+    while os.path.exists(file_path):
+        chat_filename = f"{chat_name} ({cnt}).json"  # directly use that name as filename
+        file_path = os.path.join(CHATS_DIR, chat_filename)
+        cnt += 1
+
+    # Create empty or minimal content
+    with open(file_path, 'w') as f:
+        # Possibly write an empty JSON lines or an empty JSON array
+        f.write("")  # or f.write("[]")
+
+    return {"chat_id": chat_filename}
+
+@app.get("/api/chats")
+def list_chats():
+    """
+    Returns the list of saved chat files from ./chats
+    """
+    if not os.path.exists(CHATS_DIR):
+        os.makedirs(CHATS_DIR)
+
+    files = os.listdir(CHATS_DIR)
+    chat_files = [f for f in files if f.endswith(".json")]
+    return {"chats": chat_files}
+
+@app.get("/api/chats/{chat_id}")
+def load_chat(chat_id: str, request: Request):
+    """
+    Loads the selected chat from the UI.
+    """  
+    st = request.app.state.state
+    file_path = os.path.join(CHATS_DIR, chat_id) if chat_id != "None" else None
+    st.chat = Chat(file_path)
+
+    # Convert chat to JSON
+    message_list = st.chat.get_chat_history_json()
+    return {"messages": message_list}
 
 def list_ollama_models():
     """
@@ -44,61 +93,59 @@ def list_ollama_models():
     Each model might have `.model` as an attribute.
     """
     try:
-        output = ollama.list()  # e.g., <OllamaListResult models=[...]>
-        if not output or not output.models:
-            return []
-        # e.g. output.models = [OllamaModel(model='llama2.7b'), OllamaModel(model='codellama')]
-        return [m.model for m in output.models]
-    except Exception as e:
-        print("Error listing models:", e)
+        output = ollama.list()
+        return [m.model for m in output.models] if output and output.models else []
+    except:
         return []
 
-# Return the list of available models
 @app.get("/api/models")
 def get_models():
     models = list_ollama_models()
-    models.append('Grok')
-    models.append('ChatGPT')
+    models += ["Grok", "ChatGPT"]
     return {"models": models}
 
-# Body schema for choosing model
 class ModelSelection(BaseModel):
     model: str
 
-# Endpoint to set the active model
 @app.post("/api/set_model")
-def set_model(selection: ModelSelection):
+def set_model(selection: ModelSelection, request: Request):
     model_name = selection.model.strip()
-    # Validate it is in the installed list
     installed = list_ollama_models()
     if model_name not in installed and model_name not in ONLINE_MODELS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model '{model_name}' not found among installed: {installed}"
-        )
-    load_model(model_name)
+        raise HTTPException(status_code=400, detail="Model not found.")
+    load_model(model_name, request)
     return {"detail": f"Active model set to {model_name}"}
 
+def load_model(model_name: str, request: Request):
+    """
+    If Ollama requires an explicit load step, do it here. Otherwise, we just track model_name globally.
+    For demonstration, we only store it in `ACTIVE_MODEL`.
+    """
+    st = request.app.state.state
+    st.active_model = model_name
+    if model_name == "Grok":
+        st.llm_handler = Grok_Handler()
+    elif model_name == "ChatGPT":
+        st.llm_handler = ChatGPT_Handler()
+    else:
+        st.llm_handler = Local_LLM_Handler(model_name=st.active_model)
+    print(f"Active model set to: {model_name}")
+
 @app.get("/api/chat/stream")
-def stream_chat(request: Request, message: str):
+def stream_chat(message: str, request: Request):
     """
     Returns a Server-Sent Events stream of tokens for the LLM's response.
     Accepts `message` as a query parameter or from the URL.
     """
+    st = request.app.state.state
 
-    # Because SSE is a GET endpoint, the user’s prompt can be passed as a query param, e.g. /api/chat/stream?message=Hello
-    # If you want to do POST for SSE, you'd need a different client approach. GET is simpler for SSE demos.
-    
     def event_generator(user_message: str):
-        for chunk in CHAT.get_ai_response(user_message, LLM_HANDLER):
+        for chunk in st.chat.get_ai_response(user_message, st.llm_handler):
+            chunk = chunk.replace('\n', '\\n')
             yield f"data: {chunk}\n\n"
-        # After all chunks, yield a sentinel
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_generator(message), media_type="text/event-stream")
 
 if __name__ == "__main__":
-    ACTIVE_MODEL = "llama2:latest"  # default choice
-    CHAT = Chat(None)  # No chat history file for simplicity
-    LLM_HANDLER = None
     uvicorn.run(app, host="0.0.0.0", port=8080)

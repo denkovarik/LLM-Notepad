@@ -11,6 +11,11 @@ function App() {
   // Models
   const [modelOptions, setModelOptions] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
+  
+  // Chat states
+  const [chatList, setChatList] = useState([]);  // array of filenames or IDs
+  const [selectedChat, setSelectedChat] = useState(''); // user-chosen file/ID
+
 
   // On mount, fetch /api/models
   useEffect(() => {
@@ -28,6 +33,71 @@ function App() {
       })
       .catch(err => console.error('Error fetching models:', err));
   }, []);
+  
+  // On mount, fetch chat list
+  useEffect(() => {
+    fetch('http://localhost:8080/api/chats')
+      .then((res) => res.json())
+      .then((data) => {
+        // data.chats might be ["chat_123.json", "chat_abc.json"]
+        setChatList(data.chats || []);
+      })
+      .catch((err) => console.error("Error fetching chat list:", err));
+  }, []);
+  
+  // Create new chat
+    const createNewChat = async () => {
+      // Prompt user for chat name
+      const chatName = window.prompt("Enter a name for your new chat:");
+      if (!chatName) return;
+
+      try {
+        // POST to /api/chats
+        const res = await fetch("http://localhost:8080/api/chats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: chatName })
+        });
+        if (!res.ok) {
+          const errorData = await res.json();
+          alert("Error creating chat: " + (errorData.detail || res.status));
+          return;
+        }
+        const data = await res.json();
+        if (data.chat_id) {
+          // data.chat_id e.g. "MyChat.json"
+          setChatList(prev => [...prev, data.chat_id]);
+          setSelectedChat(data.chat_id);
+          setMessages([]); // start fresh
+        }
+      } catch (err) {
+        console.error("Error creating new chat:", err);
+      }
+    };
+  
+  // Whenever selectedChat changes, load the chat's messages
+  useEffect(() => {
+      if (!selectedChat) {
+        setSelectedChat('None');
+      }
+      
+    fetch(`http://localhost:8080/api/chats/${selectedChat}`)
+      .then(res => res.json())
+      .then(data => {
+        // data.messages => e.g. [{ role: "user", content: "Hi" }, ...]
+        const transformed = (data.messages || []).map(m => {
+          return {
+            sender: m.role === 'assistant' ? 'bot' : 'user',
+            text: m.content
+          };
+        });
+        setMessages(transformed);
+      })
+      .catch(err => {
+        console.error("Error loading chat messages:", err);
+        setMessages([]);
+      });
+  }, [selectedChat]);
 
   // Toggle Dark Mode
   useEffect(() => {
@@ -99,7 +169,7 @@ function App() {
 
     source.onmessage = (event) => {
       setLoading(false); // first chunk => hide spinner
-      const chunk = event.data;
+      let chunk = event.data;
 
       if (chunk === '[DONE]') {
         source.close();
@@ -110,6 +180,8 @@ function App() {
         source.close();
         return;
       }
+      
+      chunk = chunk.replace(/\\n/g, '\n');
 
       // Append chunk to the last bot message
       setMessages(prev => {
@@ -165,6 +237,24 @@ function App() {
           </button>
         </div>
       </header>
+      
+      <div className="controls">
+        <div className="chat-selector">
+          <label>Select Chat: </label>
+            <select
+              value={selectedChat}
+              onChange={(e) => {
+                setSelectedChat(e.target.value);
+              }}
+            >
+              <option value="">--None--</option>
+              {chatList.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <button onClick={createNewChat}>New Chat</button>
+        </div>
+      </div>
 
       <div className="chat-window">
         {messages.map((message, index) => (
@@ -187,7 +277,7 @@ function App() {
         onSubmit={handleSubmit}
       >
         <textarea
-          rows={3}
+          rows={6}
           value={userMessage}
           onChange={(e) => setUserMessage(e.target.value)}
           placeholder="Type your message here..."
