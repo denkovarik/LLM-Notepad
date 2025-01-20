@@ -10,7 +10,7 @@ class Local_LLM_Handler(LLM_Handler):
     A handler class for interacting with a local LLM (like llama3.3) via Ollama with streaming and a yaspin spinner.
     """
 
-    def __init__(self, model_name: str = "llama3.3", temperature: float = 0.7):
+    def __init__(self, model_name: str = "llama3.3:latest", temperature: float = 0.7):
         """
         Initialize the Local_LLM_Handler.
 
@@ -69,4 +69,4 @@ class Local_LLM_Handler(LLM_Handler):
         ]
         
     def get_llm_name(self):
-        return 'llama3.3'
+        return self.model_name
