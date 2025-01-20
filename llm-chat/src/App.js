@@ -1,14 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import './App.css'; // Optional styling
+import './App.css';
 
 function App() {
-  // Local state
+  // Chat and UI states
   const [userMessage, setUserMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Load dark mode preference on mount
+  // Models
+  const [modelOptions, setModelOptions] = useState([]);
+  const [selectedModel, setSelectedModel] = useState('');
+
+  // On mount, fetch /api/models
+  useEffect(() => {
+    fetch('http://localhost:8080/api/models')
+      .then(res => res.json())
+      .then(data => {
+        const models = data.models || [];
+        setModelOptions(models);
+        // optionally set the first model
+        if (models.length > 0) {
+          setSelectedModel(models[0]);
+          // also call setActiveModel if you'd like to initialize the server's model
+          setActiveModel(models[0]);
+        }
+      })
+      .catch(err => console.error('Error fetching models:', err));
+  }, []);
+
+  // Toggle Dark Mode
   useEffect(() => {
     const darkModePreference = localStorage.getItem('darkMode');
     if (darkModePreference) {
@@ -16,58 +37,82 @@ function App() {
     }
   }, []);
 
-  // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     localStorage.setItem('darkMode', JSON.stringify(!isDarkMode));
   };
 
-  // This function handles sending the message to the server via SSE
+  // Call /api/set_model to change the server's active model
+  const setActiveModel = async (modelName) => {
+    try {
+      const resp = await fetch('http://localhost:8080/api/set_model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelName })
+      });
+      if (!resp.ok) {
+        const errData = await resp.json();
+        alert(`Error setting model: ${errData.detail}`);
+      } else {
+        console.log(`Active model set to ${modelName}`);
+      }
+    } catch (err) {
+      console.error('Error setting model on server:', err);
+    }
+  };
+
+  // When user selects a different model
+  const handleModelChange = async (e) => {
+    const newModel = e.target.value;
+    setSelectedModel(newModel);
+    // Now notify the server
+    await setActiveModel(newModel);
+  };
+
+  // SSE logic
   const sendMessage = () => {
     const trimmed = userMessage.trim();
     if (!trimmed) return;
 
-    // Add user's message to the chat
-    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }]);
-    setUserMessage(''); // Clear the textarea
-
-    // Show spinner
+    // Add user message
+    setMessages(prev => [...prev, { sender: 'user', text: trimmed }]);
+    setUserMessage('');
     setLoading(true);
 
-    // Construct SSE URL with the user’s prompt
+    // SSE endpoint
     const url = `http://localhost:8080/api/chat/stream?message=${encodeURIComponent(trimmed)}`;
-
-    // Create an EventSource
     const source = new EventSource(url);
 
-    // We'll insert a placeholder bot message to update with streaming text
     let botIndex = null;
-
-    // Insert a new "bot" message so we can update partial text
-    setMessages((prev) => {
+    // Insert a placeholder for the streaming bot message
+    setMessages(prev => {
       const updated = [...prev];
       botIndex = updated.length;
-      updated.push({ sender: 'bot', text: '', streaming: true });
+      updated.push({ sender: 'bot', text: '' });
       return updated;
     });
 
-    // SSE event handlers
     source.onopen = () => {
-      // SSE connection opened
-      // We'll wait for the first chunk to setLoading(false)
+      console.log('SSE connection open');
+      // We'll wait for the first chunk to hide spinner
     };
 
     source.onmessage = (event) => {
-      // First chunk => hide spinner
-      setLoading(false);
-      // If we see [DONE], close the stream gracefully
-      if (event.data === "[DONE]") {
+      setLoading(false); // first chunk => hide spinner
+      const chunk = event.data;
+
+      if (chunk === '[DONE]') {
         source.close();
-        setLoading(false);
         return;
       }
-      const chunk = event.data; // partial text chunk
-      setMessages((prev) => {
+      if (chunk.startsWith('[ERROR]')) {
+        console.error(chunk);
+        source.close();
+        return;
+      }
+
+      // Append chunk to the last bot message
+      setMessages(prev => {
         const updated = [...prev];
         updated[botIndex] = {
           ...updated[botIndex],
@@ -81,53 +126,55 @@ function App() {
       console.error('SSE error:', err);
       source.close();
       setLoading(false);
-
-      // Optionally, let user know an error occurred
-      setMessages((prev) => [...prev, {
+      setMessages(prev => [...prev, {
         sender: 'bot',
         text: 'An error occurred while streaming.'
       }]);
     };
   };
 
-  // Handle form submission
+  // Submit form
   const handleSubmit = (e) => {
     e.preventDefault();
     sendMessage();
   };
 
-  // Handle keypresses in the textarea
-  // If user hits Enter (no shift), send message
-  // If user hits Shift+Enter, allow newline
+  // On Enter vs Shift+Enter
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();  // prevent newline
+      e.preventDefault();
       sendMessage();
     }
   };
 
   return (
     <div className={`App ${isDarkMode ? 'dark-mode' : ''}`}>
-      {/* Header with dark mode toggle */}
       <header className="App-header">
         <h1>Local LLM Chat</h1>
-        <button onClick={toggleDarkMode}>
-          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-        </button>
+        <div className="header-actions">
+          <div>
+            <label>Model: </label>
+            <select value={selectedModel} onChange={handleModelChange}>
+              {modelOptions.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <button onClick={toggleDarkMode}>
+            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+          </button>
+        </div>
       </header>
 
-      {/* Chat Window */}
       <div className="chat-window">
         {messages.map((message, index) => (
-          <div
-            key={index}
+          <div 
+            key={index} 
             className={`message ${message.sender} ${isDarkMode ? 'dark-mode' : ''}`}
           >
-            <span>{message.sender === 'user' ? 'You' : 'Bot'}: </span>
             {message.text}
           </div>
         ))}
-        {/* Loading Spinner */}
         {loading && (
           <div className={`loading ${isDarkMode ? 'dark-mode' : ''}`}>
             <span>Preparing response...</span>
@@ -135,7 +182,6 @@ function App() {
         )}
       </div>
 
-      {/* Form / Textarea */}
       <form
         className={`chat-form ${isDarkMode ? 'dark-mode' : ''}`}
         onSubmit={handleSubmit}
@@ -147,7 +193,7 @@ function App() {
           placeholder="Type your message here..."
           className="chat-input"
           onKeyDown={handleKeyDown}
-        ></textarea>
+        />
         <button type="submit" className="send-button">Send</button>
       </form>
     </div>
