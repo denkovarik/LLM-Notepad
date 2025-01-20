@@ -116,6 +116,23 @@ class Chat:
         assistant_message = AIMessage(content=response)
         self.chat_history.add_message(assistant_message)
         self.append_message_to_history_file(assistant_message, self.chat_history_file)
+        
+    def get_chat_history_json(self):
+        """
+        Retrieves chat history as a list of json messages
+        
+        Returns:
+            message_list: Chat history as a list of json messages
+        """
+        # Convert ChatMessageHistory messages into JSON-friendly format
+        message_list = []
+        for msg in self.chat_history.messages:
+            if isinstance(msg, HumanMessage):
+                message_list.append({"role": "user", "content": msg.content})
+            elif isinstance(msg, AIMessage):
+                message_list.append({"role": "assistant", "content": msg.content})
+                
+        return message_list
             
     def get_user_input(self):
         user_input = input("You: ").strip()
