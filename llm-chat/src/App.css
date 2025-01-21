@@ -28,7 +28,7 @@ body {
 /* Dark mode usage */
 .App.dark-mode,
 body.dark-mode {
-  background-color: #333;
+  background-color: #222;
   color: #eee;
 }
 
@@ -189,18 +189,14 @@ body.dark-mode {
 }
 
 .chat-input {
-  flex-grow: 1;
-  padding: 10px;
-  font-size: 16px;
-  resize: none;
-  box-sizing: border-box;
   background-color: #fff;
   color: #000;
+  /* normal / light mode styling */
 }
 
 .chat-input.dark-mode {
-  background-color: #444;
-  color: #eee;
+  background-color: #333; /* a dark color */
+  color: #eee;           /* light text */
   border: 1px solid #555;
 }
 
