@@ -1,98 +1,201 @@
+/* Basic global styles */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s, color 0.3s;
 }
 
 .App {
-  text-align: center;
-  padding: 20px;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  text-align: center;
 }
 
+/* The header has transition so it can animate from collapsed to expanded */
 .App-header {
   background-color: #282c34;
-  min-height: 100px;
+  color: white;
+  padding: 10px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-  padding: 10px;
+  overflow: hidden;
+  transition: height 0.3s;
 }
 
-/* Dark Mode Styles */
-.App.dark-mode, body.dark-mode {
+/* Dark mode usage */
+.App.dark-mode,
+body.dark-mode {
   background-color: #333;
   color: #eee;
 }
 
-.App-header.dark-mode {
-  background-color: #1a1a1a;
+/* The normal height is 'auto' or whatever content requires */
+.App-header:not(.collapsed) {
+  height: auto; /* expanded */
+}
+
+/* Collapsed version => we fix the height to e.g. 40px */
+.App-header.collapsed {
+  height: 40px; /* minimal bar height */
+  padding: 0;   /* reduce padding so we see only a narrow bar */
+}
+
+/* The minimal bar in collapsed mode that holds the 'Expand Header' button */
+.collapsed-header-bar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* right side? or center? */
+  padding: 0 10px;
+}
+
+/* If the header is expanded, we show the normal content (like .header-actions). */
+.header-actions {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* The container for the 'Collapse Header' button inside expanded header */
+.hide-header-container {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+}
+
+/* Generic styling for small toggle buttons */
+.header-toggle-button {
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.header-toggle-button:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode-button {
+  padding: 5px 10px;
+  font-size: 14px;
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dark-mode-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode-button.dark-mode {
+  background-color: #555;
+  border-color: #eee;
+  color: #eee;
+}
+
+.controls {
+  margin-top: 10px;
+}
+
+.chat-selector {
+  margin-top: 10px;
+}
+
+/* Chat area */
+.chat-container {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
 }
 
 .chat-window {
-  border: 1px solid #ccc;
-  height: 400px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow-y: auto;
   padding: 10px;
-  margin: 20px 0;
-  text-align: left;
-  transition: background-color 0.3s, color 0.3s;
-  flex: 1;
+  box-sizing: border-box;
 }
 
-.chat-window.dark-mode {
-  border-color: #444;
-  background-color: #2a2a2a;
-}
-
+/* message styling */
 .message {
   margin-bottom: 10px;
   padding: 5px 10px;
   border-radius: 10px;
-  white-space: pre-wrap;   /* preserves newlines and wraps text */
-  word-wrap: break-word;   /* breaks long words */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  text-align: left;
 }
 
 .message.user {
   background-color: #dcf8c6;
-  text-align: left;
 }
-
 .message.user.dark-mode {
   background-color: #286b35;
 }
 
 .message.bot {
   background-color: #e5e5ea;
-  text-align: left;
-  white-space: pre-wrap;   /* preserves newlines and wraps text */
-  word-wrap: break-word;   /* breaks long words */
 }
-
 .message.bot.dark-mode {
   background-color: #555;
 }
 
+.loading {
+  text-align: center;
+  margin: 10px 0;
+  color: #282c34;
+}
+.loading.dark-mode {
+  color: #eee;
+}
+
+.user-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: inherit;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden; /* So resizer is visible inside */
+}
+
 .chat-form {
   display: flex;
-  margin-top: 20px;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
 }
 
 .chat-form.dark-mode {
-  background-color: #2a2a2a;
+  background-color: #222;
 }
 
 .chat-input {
   flex-grow: 1;
   padding: 10px;
   font-size: 16px;
+  resize: none;
+  box-sizing: border-box;
+  background-color: #fff;
+  color: #000;
 }
 
 .chat-input.dark-mode {
@@ -115,12 +218,19 @@ body {
   color: #1a1a1a;
 }
 
-.loading {
-  text-align: center;
-  margin: 10px 0;
-  color: #282c34;
+/* The draggable bar at the top of the user-input container */
+.resizer {
+  height: 10px;
+  width: 100%;
+  cursor: ns-resize;
+  background-color: #ccc;
+  position: relative;
 }
 
-.loading.dark-mode {
-  color: #eee;
+.resizer.dragging {
+  background-color: #999;
+}
+
+.resizer.dark-mode {
+  background-color: #555;
 }
