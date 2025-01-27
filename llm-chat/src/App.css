@@ -1,4 +1,4 @@
-/* Basic global styles */
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -229,4 +229,61 @@ body.dark-mode {
 
 .resizer.dark-mode {
   background-color: #555;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e5ea;
+  margin-bottom: 0rem;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  color: #282c34;
+  border: 1px solid #e5e5ea;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  margin-right: -1px;
+}
+
+.tabs button:hover {
+  background-color: #e9ecef;
+}
+
+.tabs button.active {
+  background-color: white;
+  color: #282c34;
+  border: 1px solid #e5e5ea;
+  border-bottom: 1px solid white;
+  z-index: 1;
+}
+
+.tabs.dark-mode button {
+  background-color: #343a40;
+  color: #e9ecef;
+}
+
+.tabs.dark-mode button:hover {
+  background-color: #495057;
+}
+
+.tabs.dark-mode button.active {
+  background-color: #282c34;
+  color: #e5e5ea;
+  border-bottom: 1px solid #282c34;
+}
+
+.tabs.dark-mode {
+  border-bottom: 1px solid #3e444f;
+}
+
+.tabs.dark-mode button {
+  border-color: #3e444f;
+}
+
+.options-container {
+  flex-grow: 1;
+  padding: 10px;
 }

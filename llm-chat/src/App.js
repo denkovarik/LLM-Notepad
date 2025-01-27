@@ -1,84 +1,34 @@
 import React, {
   useState,
   useEffect,
-  useRef,
-  useCallback
+  useRef
 } from 'react';
 import './App.css';
+import ChatTab from './views/ChatTab'; 
+import OptionsTab from './views/OptionsTab';
+import { useDarkMode } from './hooks/useDarkMode';
 
-/** Resizer for adjusting user-input container height */
-function Resizer({ height, setHeight, isDarkMode }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-
-  // Use callbacks + dependencies to avoid ESLint warnings
-  const onMouseMove = useCallback((e) => {
-    if (!isDragging) return;
-
-    const deltaY = startY - e.clientY;
-    let newHeight = parseFloat(height) + deltaY;
-
-    // min & max
-    newHeight = Math.max(newHeight, 60);
-    newHeight = Math.min(newHeight, window.innerHeight - 150);
-
-    setHeight(`${newHeight}px`);
-    setStartY(e.clientY);
-  }, [isDragging, startY, height, setHeight]);
-
-  const onMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const onMouseDown = (e) => {
-    setIsDragging(true);
-    setStartY(e.clientY);
-  };
-
-  // Attach/detach listeners for dragging
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-    return () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [isDragging, onMouseMove, onMouseUp]);
-
-  return (
-    <div
-      className={`resizer ${isDragging ? 'dragging' : ''} ${isDarkMode ? 'dark-mode' : ''}`}
-      onMouseDown={onMouseDown}
-      aria-label="Resize input field"
-    />
-  );
-}
 
 export default function App() {
   // Chat + UI states
   const [userMessage, setUserMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   // Models
   const [modelOptions, setModelOptions] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
-
   // Chats
   const [chatList, setChatList] = useState([]);
   const [selectedChat, setSelectedChat] = useState('');
-
   // The resizable user input area
   const [userInputHeight, setUserInputHeight] = useState('150px');
-
   // For auto-scrolling in the chat window
   const chatWindowRef = useRef(null);
-
   // Instead of hiding the header, we collapse it to a minimal bar
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  // Tabs
+  const [activeTab, setActiveTab] = useState('chat');
 
   /* 1) Fetch models once on mount */
   useEffect(() => {
@@ -151,20 +101,6 @@ export default function App() {
       });
   }, [selectedChat]);
 
-  /* 5) Load dark mode preference */
-  useEffect(() => {
-    const darkModePref = localStorage.getItem('darkMode');
-    if (darkModePref) {
-      setIsDarkMode(JSON.parse(darkModePref));
-    }
-  }, []);
-
-  /* 6) Toggle dark mode */
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('darkMode', JSON.stringify(!isDarkMode));
-  };
-
   /* 7) Switch to new model on server */
   const setActiveModel = async (modelName) => {
     try {
@@ -191,82 +127,6 @@ export default function App() {
     await setActiveModel(newModel);
   };
 
-  /* 9) SSE: send message */
-  function sendMessage() {
-    const trimmed = userMessage.trim();
-    if (!trimmed) return;
-
-    // Add user message
-    setMessages(prev => [...prev, { sender: 'user', text: trimmed }]);
-    setUserMessage('');
-    setLoading(true);
-
-    const url = `http://localhost:8080/api/chat/stream?message=${encodeURIComponent(trimmed)}`;
-    const source = new EventSource(url);
-
-    let botIndex = null;
-    // Insert placeholder for bot
-    setMessages(prev => {
-      const updated = [...prev];
-      botIndex = updated.length;
-      updated.push({ sender: 'bot', text: '' });
-      return updated;
-    });
-
-    source.onopen = () => {
-      console.log('SSE connection open');
-    };
-
-    source.onmessage = (event) => {
-      console.log('onmessage =>', event.data);
-      setLoading(false);
-
-      let chunk = event.data;
-      if (chunk === '[DONE]') {
-        source.close();
-        return;
-      }
-      if (chunk.startsWith('[ERROR]')) {
-        console.error(chunk);
-        source.close();
-        return;
-      }
-
-      // Replace escaped newlines
-      chunk = chunk.replace(/\\n/g, '\n');
-
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[botIndex].text += chunk;
-        return updated;
-      });
-    };
-
-    source.onerror = (err) => {
-      console.error('SSE error:', err);
-      source.close();
-      setLoading(false);
-      setMessages(prev => [
-        ...prev,
-        { sender: 'bot', text: 'An error occurred while streaming.' }
-      ]);
-    };
-  }
-
-  /* 10) Submit form */
-  function handleSubmit(e) {
-    e.preventDefault();
-    sendMessage();
-  }
-
-  /* 11) SHIFT+Enter vs Enter */
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  }
-
   /* 12) Scroll chat to bottom on new messages */
   useEffect(() => {
     if (chatWindowRef.current) {
@@ -281,8 +141,20 @@ export default function App() {
 
   return (
     <div className={`App ${isDarkMode ? 'dark-mode' : ''}`}>
-      {/* We always render the header, 
-          but apply .collapsed if headerCollapsed = true */}
+      <div className="tabs">
+        <button 
+          onClick={() => setActiveTab('chat')} 
+          className={activeTab === 'chat' ? 'active' : ''}
+        >
+          Chat
+        </button>
+        <button 
+          onClick={() => setActiveTab('options')} 
+          className={activeTab === 'options' ? 'active' : ''}
+        >
+          Options
+        </button>
+      </div>
       <header className={`App-header ${headerCollapsed ? 'collapsed' : ''}`}>
         {headerCollapsed ? (
           /* Minimal bar when collapsed: show a single button to expand again */
@@ -293,7 +165,7 @@ export default function App() {
           </div>
         ) : (
           /* Full expanded header content */
-          <>
+          <>          
             <h1>LLM Notepad</h1>
             <div className="header-actions">
               <div>
@@ -340,48 +212,25 @@ export default function App() {
           </>
         )}
       </header>
-
-      <div className="chat-container" style={{ marginBottom: userInputHeight }}>
-        <div className="chat-window" ref={chatWindowRef}>
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`message ${message.sender} ${isDarkMode ? 'dark-mode' : ''}`}
-            >
-              {message.text}
-            </div>
-          ))}
-          {loading && (
-            <div className={`loading ${isDarkMode ? 'dark-mode' : ''}`}>
-              <span>Preparing response...</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="user-input-container" style={{ height: userInputHeight }}>
-        <Resizer height={userInputHeight} setHeight={setUserInputHeight} isDarkMode={isDarkMode} />
-
-        <form className={`chat-form ${isDarkMode ? 'dark-mode' : ''}`} onSubmit={handleSubmit}>
-          {/* 
-            For inverting colors in dark mode, 
-            ensure we have .chat-input.dark-mode in our CSS:
-              background-color: #111; 
-              color: #eee;
-          */}
-          <textarea
-            style={{ height: 'calc(100% - 10px)', width: '100%' }}
-            value={userMessage}
-            onChange={(e) => setUserMessage(e.target.value)}
-            placeholder="Type your message..."
-            className={`chat-input ${isDarkMode ? 'dark-mode' : ''}`}
-            onKeyDown={handleKeyDown}
-          />
-          <button type="submit" className="send-button">
-            Send
-          </button>
-        </form>
-      </div>
+      
+      {activeTab === 'chat' ? (
+        <ChatTab 
+          messages={messages} 
+          loading={loading} 
+          isDarkMode={isDarkMode}
+          userInputHeight={userInputHeight}
+          chatWindowRef={chatWindowRef}
+          userMessage={userMessage}
+          setUserMessage={setUserMessage}
+          setUserInputHeight={setUserInputHeight}
+          setMessages={setMessages}
+          setLoading={setLoading}
+        />
+      ) : (
+        <OptionsTab 
+          // pass props if needed
+        />
+      )}
     </div>
   );
 }
