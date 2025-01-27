@@ -21,11 +21,7 @@ export function useDarkMode() {
       localStorage.setItem('darkMode', JSON.stringify(newMode));
       return newMode;
     });
-    
-    const tabs = document.querySelector('.tabs');
-    if (tabs) {
-      tabs.classList.toggle('dark-mode');
-    }
+   
   }, []);
 
   return { isDarkMode, toggleDarkMode };
