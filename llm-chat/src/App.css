@@ -28,7 +28,7 @@ body {
 /* Dark mode usage */
 .App.dark-mode,
 body.dark-mode {
-  background-color: #222;
+  background-color: #000000;
   color: #eee;
 }
 
@@ -145,14 +145,14 @@ body.dark-mode {
   background-color: #dcf8c6;
 }
 .message.user.dark-mode {
-  background-color: #286b35;
+  background-color: #19331E;
 }
 
 .message.bot {
   background-color: #e5e5ea;
 }
 .message.bot.dark-mode {
-  background-color: #555;
+  background-color: #2B2B2B;
 }
 
 .loading {
@@ -191,7 +191,6 @@ body.dark-mode {
 .chat-input {
   background-color: #fff;
   color: #000;
-  /* normal / light mode styling */
 }
 
 .chat-input.dark-mode {
