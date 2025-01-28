@@ -27,9 +27,9 @@ class LLM_Handler:
         self.model_name = model_name
         self.temperature = temperature
 
-    def convert_messages(self, messages: List[BaseMessage]) -> List[dict]:
+    def convert_messages(self, history: List[BaseMessage], n_last_messages=1000) -> List[dict]:
         """
-        Convert langchain messages to Grok API compatible messages.
+        Convert langchain messages to LLM API compatible messages.
 
         Args:
             messages (List[BaseMessage]): List of message objects.
@@ -37,23 +37,22 @@ class LLM_Handler:
         Returns:
             List[dict]: List of messages formatted for the Grok API.
         """
-        converted_messages = []
-        for message in messages:
-            if isinstance(message, HumanMessage):
-                converted_messages.append({"role": "user", "content": message.content})
-            elif isinstance(message, AIMessage):
-                converted_messages.append({"role": "assistant", "content": message.content})
-            else:
-                # For any other message types, default to 'user' role
-                converted_messages.append({"role": "user", "content": message.content})
-        return converted_messages
+        messages = []
+        if history:
+            # Get only the last n messages from history
+            last_n_messages = history[-n_last_messages:]
+            messages = [
+                {"role": "user" if isinstance(message, HumanMessage) else "assistant", "content": message.content}
+                for message in last_n_messages
+            ]
+        return messages
     
     @abstractmethod
     def get_llm_name(self):
         pass
 
     @abstractmethod
-    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None) -> str:
+    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 10) -> str:
         """
         Get a response from LLM based on the prompt and conversation history.
 
