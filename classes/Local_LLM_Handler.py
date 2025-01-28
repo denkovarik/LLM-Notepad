@@ -21,7 +21,7 @@ class Local_LLM_Handler(LLM_Handler):
         self.model_name = model_name
         self.temperature = temperature
 
-    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None) -> str:
+    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000) -> str:
         """
         Get a response from the local LLM based on the prompt and conversation history with streaming and a spinner.
 
@@ -33,15 +33,14 @@ class Local_LLM_Handler(LLM_Handler):
             str: The assistant's response.
         """
         messages = []
+        print('yo')
         if history:
-            for message in history.messages:
-                if isinstance(message, HumanMessage):
-                    messages.append({"role": "user", "content": message.content})
-                elif isinstance(message, AIMessage):
-                    messages.append({"role": "assistant", "content": message.content})
-
+            messages = self.convert_messages(history.messages, n_last_messages)
+        
+        print('man')
+        # Append the current prompt
         messages.append({"role": "user", "content": prompt})
-
+        
         try:
             response = ollama.chat(model=self.model_name, 
                                   messages=messages, 
@@ -52,21 +51,6 @@ class Local_LLM_Handler(LLM_Handler):
         except Exception as e:
             print(f"Error communicating with local LLM: {e}")
             return "I'm sorry, but I'm unable to assist with that request at the moment."
-
-    def convert_messages(self, messages: List[BaseMessage]) -> List[dict]:
-        """
-        Convert LangChain messages to a format suitable for Ollama.
-
-        Args:
-            messages (List[BaseMessage]): List of messages from LangChain.
-
-        Returns:
-            List[dict]: Converted messages for Ollama.
-        """
-        return [
-            {"role": "user" if isinstance(m, HumanMessage) else "assistant", "content": m.content} 
-            for m in messages
-        ]
         
     def get_llm_name(self):
         return self.model_name
