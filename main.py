@@ -19,6 +19,7 @@ class AppState:
         self.active_model = "llama2:latest"
         self.llm_handler = None
         self.chat = Chat(None)
+        self.chat_summarizer_llm_model_name = None
 
 app = FastAPI()
 app.add_middleware(
@@ -115,6 +116,58 @@ def set_model(selection: ModelSelection, request: Request):
         raise HTTPException(status_code=400, detail="Model not found.")
     load_model(model_name, request)
     return {"detail": f"Active model set to {model_name}"}
+ 
+class SummarizationToggle(BaseModel):
+    summarizeHistory: bool
+ 
+@app.get("/api/get_settings")
+def get_settings(request: Request):
+    st = request.app.state.state
+    return {
+        "summarizeHistory": st.chat.summarize_history_enabled(),
+        "summaryModel": st.chat.chat_summarizer_llm_model_name,
+        "maxMessagesToFeed": st.chat.max_messages_to_feed
+    }
+    
+class MaxMessages(BaseModel):
+    maxMessages: int
+    
+@app.post("/api/set_max_messages")
+def set_max_messages(selection: MaxMessages, request: Request):
+    st = request.app.state.state
+    if st.chat:
+        st.chat.set_max_messages_to_feed(selection.maxMessages)
+    return {"detail": f"Max messages set to {selection.maxMessages}"}
+ 
+@app.post("/api/set_summarization")
+def set_summarization(selection: SummarizationToggle, request: Request):
+    st = request.app.state.state
+    if not selection.summarizeHistory:
+        st.chat.set_llm_chat_summarizer(None)
+    return {"detail": "Summarization setting updated"}
+ 
+@app.post("/api/disable_summarization")
+def disable_summarization(request: Request):
+    st = request.app.state.state
+    if st.chat:
+        st.chat.set_llm_chat_summarizer(None)
+    return {"detail": "Chat history summarization disabled"}
+ 
+@app.post("/api/set_summarization_model") 
+def set_summarization_model(selection: ModelSelection, request: Request):
+    model_name = selection.model.strip()
+    installed = list_ollama_models()
+    if model_name not in installed and model_name not in ONLINE_MODELS:
+        raise HTTPException(status_code=400, detail="Model not found.")
+    
+    st = request.app.state.state
+    st.chat_summarizer_llm_model_name = model_name
+    
+    # Here we are assuming that `set_llm_chat_summarizer` is a method in your `Chat` class
+    if st.chat:
+        st.chat.set_llm_chat_summarizer(st.chat_summarizer_llm_model_name)
+    
+    return {"detail": f"Summarization model set to {model_name}"}
 
 def load_model(model_name: str, request: Request):
     """

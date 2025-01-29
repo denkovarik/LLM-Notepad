@@ -29,6 +29,9 @@ export default function App() {
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   // Tabs
   const [activeTab, setActiveTab] = useState('chat');
+  
+  const [summarizeHistory, setSummarizeHistory] = useState(false);
+  const [summaryModel, setSummaryModel] = useState('');
 
   /* 1) Fetch models once on mount */
   useEffect(() => {
@@ -228,7 +231,10 @@ export default function App() {
         />
       ) : (
         <OptionsTab 
-          // pass props if needed
+          summarizeHistory={summarizeHistory} 
+          setSummarizeHistory={setSummarizeHistory}
+          summaryModel={summaryModel}
+          setSummaryModel={setSummaryModel}
         />
       )}
     </div>
