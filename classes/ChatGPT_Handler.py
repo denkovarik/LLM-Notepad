@@ -29,7 +29,7 @@ class ChatGPT_Handler(LLM_Handler):
     def get_llm_name(self):
         return 'ChatGPT'
 
-    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000) -> str:
+    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000, chat_summary: str = None) -> str:
         """
         Get a response from ChatGPT based on the prompt and conversation history.
 
@@ -43,7 +43,7 @@ class ChatGPT_Handler(LLM_Handler):
         # Prepare the messages for the API call
         messages = []
         if history:
-            messages = self.convert_messages(history.messages, n_last_messages)
+            messages = self.convert_messages(history.messages, n_last_messages, chat_summary)
 
         # Add the current user prompt
         messages.append({"role": "user", "content": prompt})

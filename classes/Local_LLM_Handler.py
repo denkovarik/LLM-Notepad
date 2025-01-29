@@ -4,6 +4,8 @@ from langchain.schema import AIMessage, HumanMessage, BaseMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 from typing import List, Optional
 from .LLM_Handler import LLM_Handler
+import torch
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 class Local_LLM_Handler(LLM_Handler):
     """
@@ -21,27 +23,27 @@ class Local_LLM_Handler(LLM_Handler):
         self.model_name = model_name
         self.temperature = temperature
 
-    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000) -> str:
+    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000, chat_summary: str = None) -> str:
         """
         Get a response from the local LLM based on the prompt and conversation history with streaming and a spinner.
 
         Args:
             prompt (str): The user's prompt.
             history (ChatMessageHistory, optional): The conversation history.
+            n_last_messages (int): The last n messages to feed to the LLM
+            chat_summary: The current summary of the chat.
 
         Returns:
             str: The assistant's response.
-        """
-        messages = []
-        print('yo')
+        """        
+        messages = []            
         if history:
-            messages = self.convert_messages(history.messages, n_last_messages)
+            messages = self.convert_messages(history.messages, n_last_messages, chat_summary) 
         
-        print('man')
         # Append the current prompt
         messages.append({"role": "user", "content": prompt})
-        
-        try:
+                
+        try:            
             response = ollama.chat(model=self.model_name, 
                                   messages=messages, 
                                   options={"temperature": self.temperature}, 
