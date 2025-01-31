@@ -40,7 +40,6 @@ class LLM_Handler:
         messages = []
         
         if chat_summary is not None:
-            print('que')
             messages.append({"role": "system", "content": 'The following is a summary of the current chat:'})
             messages.append({"role": "system", "content": chat_summary})
         
