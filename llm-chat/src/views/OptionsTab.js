@@ -7,23 +7,52 @@ function OptionsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const [forceRender, setForceRender] = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState([]); 
+
+  const handleOpenFileBrowser = () => {
+    fetch('http://localhost:8080/api/open_file_browser', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ }) // Pass the initial directory if needed
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+      // Handle the response data
+    })
+    .catch(error => {
+      setError(`Error opening file browser: ${error.message}`);
+    });
+  };
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
     setLoading(true);
     Promise.all([
       fetch('http://localhost:8080/api/models').then(res => res.json()),
-      fetch('http://localhost:8080/api/get_settings').then(res => res.json())
+      fetch('http://localhost:8080/api/get_settings').then(res => res.json()),
+      fetch('http://localhost:8080/api/get_reference_files').then(res => res.json()) // Add this fetch call
     ])
-    .then(([modelsData, settingsData]) => {
+    .then(([modelsData, settingsData, referenceFilesData]) => {
       setAvailableModels(modelsData.models || []);
       setSummarizeHistory(settingsData.summarizeHistory || false);
       setSummaryModel(settingsData.summaryModel || '');
-      setMaxMessagesToFeed(settingsData.maxMessagesToFeed || 0); 
+      setMaxMessagesToFeed(settingsData.maxMessagesToFeed || 0);
+      setReferenceFiles(referenceFilesData.referenceFiles || []); // Update reference files state
       setLoading(false);
     })
     .catch(err => {
-      setError('Error fetching settings or models.');
+      setError('Error fetching settings, models, or reference files.');
       setLoading(false);
     });
   }, []);
@@ -98,8 +127,8 @@ function OptionsTab() {
   };
 
   return (
-    <div className="options-container">
-      <h2>Options</h2>
+    <div className="options-container" style={{ textAlign: 'left' }}>
+      <h2>Options</h2>   
       
       <section className="chat-history-options">
         <h3>Chat History Summarization</h3>
@@ -142,6 +171,22 @@ function OptionsTab() {
         </div>        
         {error && <p className="error-message">{error}</p>}
       </section>
+      
+      <section className="reference-file-upload">
+        <h3>Reference Files</h3>
+        <button onClick={handleOpenFileBrowser}>Choose File</button>
+        <h2>Reference Files:</h2>
+          {referenceFiles.length > 0 && (
+            <div>
+              <h4>Current Reference Files:</h4>
+              <ul>
+                {referenceFiles.map((file, index) => (
+                  <li key={index}>{file}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
 
       <p>Coming soon: File upload, settings, etc.</p>
     </div>

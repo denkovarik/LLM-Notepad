@@ -4,15 +4,21 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import ollama
 import os, json
+from fastapi import File, UploadFile
+from pydantic import BaseModel
+from typing import List, Dict
+import subprocess
+import tempfile
 
 from classes.Local_LLM_Handler import Local_LLM_Handler
 from classes.Grok_Handler import Grok_Handler
 from classes.ChatGPT_Handler import ChatGPT_Handler
 from classes.Chat import Chat
-from pydantic import BaseModel
 
 CHATS_DIR = "./chats"
 ONLINE_MODELS = ["Grok", "ChatGPT"]
+BASE_DIR_PATH = "C:\\"
+BASE_DIR_PATH = '/home'
 
 class AppState:
     def __init__(self):
@@ -31,6 +37,71 @@ app.add_middleware(
 )
 
 app.state.state = AppState()
+
+@app.get("/api/get_reference_files")
+def get_reference_files(request: Request):
+    print('here')
+    st = request.app.state.state
+    if not st.chat:
+        raise HTTPException(status_code=404, detail="No chat instance found")
+    try:
+        ref_files = list(st.chat.reference_files)
+        print(ref_files)
+        return {"reference_files": ref_files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/open_file_browser")
+def open_file_browser(request: Request):
+    st = request.app.state.state
+    try:
+        filePath = select_file(BASE_DIR_PATH)
+        new_dir_path = os.path.dirname(filePath)
+        st.chat.add_file_path(filePath)
+        
+        return {"message": "File browser opened successfully!", "new_dir_path": new_dir_path}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+def select_file(initialDir="C:\\"):
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as temp:
+        temp_filename = temp.name
+        # Convert WSL path to Windows path
+        win_temp_filename = subprocess.run(['wslpath', '-w', temp_filename], capture_output=True, text=True).stdout.strip()
+        
+        # Prepare PowerShell command to open file dialog and write the path to the temp file
+        ps_command = f'''
+            Add-Type -AssemblyName System.Windows.Forms
+            $file = New-Object System.Windows.Forms.OpenFileDialog
+            $file.InitialDirectory = "{initialDir}"
+            if($file.ShowDialog() -eq "OK") {{
+                $file.FileName | Out-File -Encoding ASCII -FilePath '{win_temp_filename}'
+            }}
+        '''
+        
+        # Run PowerShell command to open file dialog
+        subprocess.run(['powershell.exe', '-Command', ps_command])
+        
+        # Check if a file was selected
+        if os.path.exists(temp_filename):
+            with open(temp_filename, 'r') as f:
+                file_path = f.read().strip()
+            os.remove(temp_filename)
+            
+            # Convert the Windows path to WSL path
+            wsl_file_path = subprocess.run(["wslpath", "-u", file_path], capture_output=True, text=True).stdout.strip()
+            
+            # Extract just the filename
+            filename = os.path.basename(wsl_file_path)
+            
+            # Print the full path and filename
+            print(f"Selected File Path: {wsl_file_path}")
+            print(f"Selected File Name: {filename}")
+            
+            return wsl_file_path
+        else:
+            print("No file selected")
+            return None
 
 class CreateChatRequest(BaseModel):
     name: str

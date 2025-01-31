@@ -35,6 +35,24 @@ class Chat:
         self.llm_chat_summarizer = None
         if self.chat_summarizer_llm_model_name is not None:
             self.set_llm_chat_summarizer(self.chat_summarizer_llm_model_name)
+        self.reference_files = set()
+
+    def add_file_path(self, file_path: str) -> bool:
+        """
+        Adds a file path to the set of file paths if the file exists.
+
+        Args:
+            file_path (str): The full path to the file.
+
+        Returns:
+            bool: True if the file was added successfully, False otherwise.
+        """
+        if os.path.isfile(file_path):
+            self.reference_files.add(file_path)
+            return True
+        else:
+            print(f"File not found: {file_path}")
+            return False
 
     def append_message_to_history_file(self, message, chat_history_file):
         """
