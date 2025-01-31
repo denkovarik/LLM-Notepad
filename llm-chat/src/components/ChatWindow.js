@@ -1,13 +1,6 @@
 import React, { useEffect } from 'react';
 
 const ChatWindow = ({ messages, setMessages, userMessage, setUserMessage, isDarkMode, chatWindowRef, loading, setLoading }) => {   
-    
-  // Scroll chat to bottom on new messages
-  useEffect(() => {
-    if (chatWindowRef.current) {
-      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
-    }
-  }, [messages, chatWindowRef]);
   
   return (
     <div className={`chat-window ${isDarkMode ? 'dark-mode' : ''}`} ref={chatWindowRef}>
