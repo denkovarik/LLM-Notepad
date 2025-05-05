@@ -11,27 +11,45 @@ function OptionsTab() {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [forceRender, setForceRender] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState([]); 
+  const [refreshKey, setRefreshKey] = useState(0); // New state for refreshing
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/get_reference_files', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => setReferenceFiles(data.referenceFiles || []))
+    .catch(error => console.error('Error fetching reference files:', error));
+  }, [refreshKey]); // Update effect to listen for refreshKey changes
 
   const handleOpenFileBrowser = () => {
     fetch('http://localhost:8080/api/open_file_browser', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(() => setRefreshKey(refreshKey + 1)) // Trigger a refresh after file selection
+    .catch(error => console.error('Error opening file browser:', error));
+  };
+
+  const fetchReferenceFiles = () => {
+    fetch('http://localhost:8080/api/get_reference_files', {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ }) // Pass the initial directory if needed
+      }
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Failed to get reference files.');
       }
       return response.json();
     })
     .then(data => {
-      console.log(data);
-      // Handle the response data
+      setReferenceFiles(data); // Update state with new reference files
     })
     .catch(error => {
-      setError(`Error opening file browser: ${error.message}`);
+      console.error('Error getting reference files:', error);
     });
   };
 
@@ -44,6 +62,14 @@ function OptionsTab() {
       fetch('http://localhost:8080/api/get_reference_files').then(res => res.json()) // Add this fetch call
     ])
     .then(([modelsData, settingsData, referenceFilesData]) => {
+            console.log("Reference files response:", referenceFiles); // Add this line
+    if ("referenceFiles" in referenceFiles) {
+      setReferenceFiles(referenceFiles.referenceFiles);
+    } else if ("error" in referenceFiles) {
+      setError(`Error fetching reference files: ${referenceFiles.error}`);
+    }
+        
+        
       setAvailableModels(modelsData.models || []);
       setSummarizeHistory(settingsData.summarizeHistory || false);
       setSummaryModel(settingsData.summaryModel || '');
@@ -175,18 +201,19 @@ function OptionsTab() {
       <section className="reference-file-upload">
         <h3>Reference Files</h3>
         <button onClick={handleOpenFileBrowser}>Choose File</button>
-        <h2>Reference Files:</h2>
-          {referenceFiles.length > 0 && (
-            <div>
-              <h4>Current Reference Files:</h4>
-              <ul>
-                {referenceFiles.map((file, index) => (
-                  <li key={index}>{file}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        {referenceFiles.length > 0 ? (
+          <div>
+            <h4>Current Reference Files:</h4>
+            <ul>
+              {referenceFiles.map((file, index) => (
+                <li key={index}>{file}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p>No reference files selected.</p>
+        )}
+      </section>
 
       <p>Coming soon: File upload, settings, etc.</p>
     </div>

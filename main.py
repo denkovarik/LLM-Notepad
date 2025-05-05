@@ -40,14 +40,13 @@ app.state.state = AppState()
 
 @app.get("/api/get_reference_files")
 def get_reference_files(request: Request):
-    print('here')
     st = request.app.state.state
     if not st.chat:
         raise HTTPException(status_code=404, detail="No chat instance found")
     try:
         ref_files = list(st.chat.reference_files)
         print(ref_files)
-        return {"reference_files": ref_files}
+        return {"referenceFiles": ref_files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

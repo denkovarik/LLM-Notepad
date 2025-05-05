@@ -29,13 +29,20 @@ class Grok_Handler(LLM_Handler):
     def get_llm_name(self):
         return 'Grok'
 
-    def get_response(self, prompt: str, history: Optional[ChatMessageHistory] = None, n_last_messages: int = 1000, chat_summary: str = None) -> str:
+    def get_response(self, prompt: str, 
+                 history: Optional[ChatMessageHistory] = None, 
+                 chat_summary: str = None, 
+                 n_last_messages: int = 10, 
+                 reference_files: str = None) -> str:
         """
         Get a response from Grok based on the prompt and conversation history.
 
         Args:
             prompt (str): The user's prompt.
             history (ChatMessageHistory, optional): The conversation history.
+            chat_summary (str): Summary of chat history.
+            n_last_messages (int): The last n messages to feed to the LLM
+            reference_files: A set of related reference files to feed to the LLM.
 
         Returns:
             str: The assistant's response.
@@ -44,7 +51,8 @@ class Grok_Handler(LLM_Handler):
         messages = []
         if history:
             messages = self.convert_messages(history.messages, n_last_messages, chat_summary)
-
+        # Append reference files to messages    
+        messages = self.add_reference_files(messages, reference_files)   
         # Add the current user prompt
         messages.append({"role": "user", "content": prompt})
 

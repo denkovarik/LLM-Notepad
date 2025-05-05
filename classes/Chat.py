@@ -13,7 +13,7 @@ from classes.ChatGPT_Handler import ChatGPT_Handler
 
 
 class Chat:
-    def __init__(self, chat_history_file=None, max_messages_to_feed=10, chat_summarizer_llm_model_name=None):
+    def __init__(self, chat_history_file=None, max_messages_to_feed=20, chat_summarizer_llm_model_name=None):
         """
         Initialize the Chat.
         
@@ -139,7 +139,11 @@ class Chat:
 
         with yaspin(text=AI.get_llm_name() + ': ', spinner='dots', side='right') as spinner:
             try:
-                for chunk in AI.get_response(prompt=user_input, history=self.chat_history, chat_summary=self.chat_summary):
+                for chunk in AI.get_response(prompt=user_input, 
+                                             history=self.chat_history, 
+                                             chat_summary=self.chat_summary, 
+                                             n_last_messages=self.max_messages_to_feed, 
+                                             reference_files=self.reference_files):
                     # Stop the spinner once we start receiving data
                     if spinner_active:
                         spinner.stop()
@@ -283,11 +287,10 @@ class Chat:
         ... ----------------------
         ...
         ... Please use the chat history and the current chat summary to summarize the chat history. Please adhere to the following guidelines when compiling you summary:
-        ... 1. Please don't 
-        ... 2. Be as detailed as you need to be, and don't worry too much about the length of the summary. 
-        ... 3. Please summarize the chat that would give any Large Language Model that proper context to adequately respond to the user's prompt.
-        ... 4. Remember that you are not the AI participating in this chat.
-        ... 5. Refer to the other AI as 'the AI'.' 
+        ... 1. Be as detailed as you need to be, and don't worry too much about the length of the summary. 
+        ... 2. Please summarize the chat that would give any Large Language Model that proper context to adequately respond to the user's prompt.
+        ... 3. Remember that you are not the AI participating in this chat.
+        ... 4. Refer to the other AI as 'the AI'.' 
         ...
         ... Please provide a summarry of the above chat. \
         ... '''.format(chat_summary=self.chat_summary)    

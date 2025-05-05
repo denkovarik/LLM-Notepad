@@ -40,7 +40,6 @@ function ChatTab({ messages, loading, isDarkMode, userInputHeight, chatWindowRef
     };
 
     source.onmessage = (event) => {
-      console.log('onmessage =>', event.data);
       setLoading(false);
 
       let chunk = event.data;
