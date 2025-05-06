@@ -17,3 +17,5 @@ pip install -e .
 cd "$original_dir";
 
 echo "Current working directory: $(pwd)";
+
+pip install nest_asyncio
