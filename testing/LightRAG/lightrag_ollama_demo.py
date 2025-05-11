@@ -1,7 +1,7 @@
 import asyncio
 import nest_asyncio
 
-import os
+import os, sys
 import inspect
 import logging
 from lightrag import LightRAG, QueryParam
@@ -52,14 +52,21 @@ async def print_stream(stream):
 
 
 def main():
+    text_filepath = "./chats/llm_sample_chat.json"
+    
+    # cmd args
+    if len(sys.argv) > 1:
+        text_filepath = sys.argv[1]
+    
     # Initialize RAG instance
     rag = asyncio.run(initialize_rag())
 
     # Insert example text
-    with open("./chats/llm_sample_chat.json", "r", encoding="utf-8") as f:
+    with open(text_filepath, "r", encoding="utf-8") as f:
         rag.insert(f.read())
         
     query="Can you please summarize this chat?"
+    query="How are you today?"
 
     # Test different query modes
     print("\nNaive Search:")
