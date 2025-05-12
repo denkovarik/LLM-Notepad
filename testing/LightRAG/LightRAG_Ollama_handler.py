@@ -3,7 +3,7 @@ import asyncio
 import time
 from lightrag import LightRAG, QueryParam
 from lightrag.llm.ollama import ollama_model_complete, ollama_embed
-from classes.LightRAG_Handler import LightRAG_Interface, LightRAG_Local, LightRAG_Local
+from classes.LightRAG_Handler import LightRAG_Interface, LightRAG_Local
 
 
 def main():
