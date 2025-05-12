@@ -7,19 +7,8 @@ function OptionsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [fileInputKey, setFileInputKey] = useState(0);
-  const [forceRender, setForceRender] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const handleOpenFileBrowser = () => {
-    fetch('http://localhost:8080/api/open_file_browser', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(() => setRefreshKey(refreshKey + 1)) // Trigger a refresh after file selection
-    .catch(error => console.error('Error opening file browser:', error));
-  };
+  const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
+  const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
@@ -31,7 +20,9 @@ function OptionsTab() {
     .then(([modelsData, settingsData]) => {        
       setAvailableModels(modelsData.models || []);
       setSummarizeHistory(settingsData.summarizeHistory || false);
+      setLightRAGEnabled(settingsData.lightRAGEnabled || false);
       setSummaryModel(settingsData.summaryModel || '');
+      setLightRAGLLMModel(settingsData.lightRAGLLMModel || '');
       setMaxMessagesToFeed(settingsData.maxMessagesToFeed || 0);
       setLoading(false);
     })
@@ -41,6 +32,7 @@ function OptionsTab() {
     });
   }, []);
 
+  // Chat History Summarization
   const handleSummarizeToggle = (e) => {
     const isChecked = e.target.checked;
     
@@ -109,6 +101,54 @@ function OptionsTab() {
       setError(`Error setting max messages: ${error.message}`);
     });
   };
+  
+  // Light RAG
+  const handleLightRAGToggle = (e) => {
+    const isChecked = e.target.checked;
+  
+    setLightRAGEnabled(isChecked);
+    fetch('http://localhost:8080/api/set_light_rag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lightRAGEnabled: isChecked })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to set Light RAG.');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      setError(`Error setting Light RAG: ${error.message}`);
+      // Revert the state if the server call fails
+      setLightRAGEnabled(!isChecked);
+    });
+  };
+  
+  const handleLightRAGLLMModelChange = (e) => {
+    setLightRAGLLMModel(e.target.value);
+    setError(null); // Clear error message when user selects a model
+    fetch('http://localhost:8080/api/set_lightRAG_llm_model', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: e.target.value })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to set light RAG llm model.');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      setError(`Error setting light RAG llm model: ${error.message}`);
+    });
+  };
 
   return (
     <div className="options-container" style={{ textAlign: 'left' }}>
@@ -153,6 +193,40 @@ function OptionsTab() {
             disabled={!summarizeHistory}
           />
         </div>        
+        {error && <p className="error-message">{error}</p>}
+      </section>
+      
+      <section className="light-rag-options">
+        <h3>Light RAG</h3>
+        <div>
+          <label>
+            <input 
+              type="checkbox"
+              name="lightRAG"
+              value={true}
+              checked={lightRAGEnabled}
+              onChange={handleLightRAGToggle}
+            />
+            Enable Light RAG
+          </label>
+        </div>
+        <div>
+          <label>LLM Model: </label>
+          {loading ? (
+            <span>Loading...</span>
+          ) : (
+            <select 
+              value={lightRAGLLMModel} 
+              onChange={handleLightRAGLLMModelChange}
+              disabled={!lightRAGEnabled}
+            >
+              <option value="">--Please choose a model--</option>
+              {availableModels.map(model => (
+                <option key={model} value={model}>{model}</option>
+              ))}
+            </select>
+          )}
+        </div>       
         {error && <p className="error-message">{error}</p>}
       </section>
 

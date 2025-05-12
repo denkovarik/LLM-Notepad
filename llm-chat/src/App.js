@@ -32,6 +32,9 @@ export default function App() {
   
   const [summarizeHistory, setSummarizeHistory] = useState(false);
   const [summaryModel, setSummaryModel] = useState('');
+  
+  const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
+  const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
 
   /* 1) Fetch models once on mount */
   useEffect(() => {
@@ -235,6 +238,10 @@ export default function App() {
           setSummarizeHistory={setSummarizeHistory}
           summaryModel={summaryModel}
           setSummaryModel={setSummaryModel}
+          lightRAGEnabled={lightRAGEnabled}
+          setLightRAGEnabled={setLightRAGEnabled}
+          lightRAGLLMModel={lightRAGLLMModel}
+          setLightRAGLLMModel={setLightRAGLLMModel}          
         />
       )}
     </div>
