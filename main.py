@@ -26,6 +26,8 @@ class AppState:
         self.llm_handler = None
         self.chat = Chat(None)
         self.chat_summarizer_llm_model_name = None
+        self.light_rag_enabled = False
+        self.lightRAG_llm_model_name = None
 
 app = FastAPI()
 app.add_middleware(
@@ -37,18 +39,6 @@ app.add_middleware(
 )
 
 app.state.state = AppState()
-
-@app.get("/api/get_reference_files")
-def get_reference_files(request: Request):
-    st = request.app.state.state
-    if not st.chat:
-        raise HTTPException(status_code=404, detail="No chat instance found")
-    try:
-        ref_files = list(st.chat.reference_files)
-        print(ref_files)
-        return {"referenceFiles": ref_files}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/open_file_browser")
 def open_file_browser(request: Request):
@@ -196,7 +186,9 @@ def get_settings(request: Request):
     return {
         "summarizeHistory": st.chat.summarize_history_enabled(),
         "summaryModel": st.chat.chat_summarizer_llm_model_name,
-        "maxMessagesToFeed": st.chat.max_messages_to_feed
+        "maxMessagesToFeed": st.chat.max_messages_to_feed,
+        "lightRAGEnabled": st.chat.lightRAG_enabled(),
+        "lightRAGLLMModel": st.chat.lightRAG_llm_model_name,
     }
     
 class MaxMessages(BaseModel):
@@ -238,6 +230,33 @@ def set_summarization_model(selection: ModelSelection, request: Request):
         st.chat.set_llm_chat_summarizer(st.chat_summarizer_llm_model_name)
     
     return {"detail": f"Summarization model set to {model_name}"}
+    
+class LightRAGToggle(BaseModel):
+    lightRAGEnabled: bool
+
+@app.post("/api/set_light_rag")
+def set_light_rag(selection: LightRAGToggle, request: Request):
+    print("Hello")
+    st = request.app.state.state
+    print(selection.lightRAGEnabled)
+    st.chat.light_rag_enabled = selection.lightRAGEnabled
+    return {"detail": "Light RAG setting updated"}
+    
+@app.post("/api/set_lightRAG_llm_model") 
+def set_lightRAG_llm_model(selection: ModelSelection, request: Request):
+    model_name = selection.model.strip()
+    print(model_name)
+    installed = list_ollama_models()
+    if model_name not in installed and model_name not in ONLINE_MODELS:
+        raise HTTPException(status_code=400, detail="Model not found.")
+    
+    st = request.app.state.state
+    st.lightRAG_llm_model_name = model_name
+    
+    if st.chat:
+        st.chat.set_lightRAG_llm_model(st.lightRAG_llm_model_name)
+    
+    return {"detail": f"Light RAG LLM model set to {model_name}"}
 
 def load_model(model_name: str, request: Request):
     """
