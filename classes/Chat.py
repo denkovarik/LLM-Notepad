@@ -36,6 +36,8 @@ class Chat:
         if self.chat_summarizer_llm_model_name is not None:
             self.set_llm_chat_summarizer(self.chat_summarizer_llm_model_name)
         self.reference_files = set()
+        self.light_rag_enabled = False
+        self.lightRAG_llm_model_name = None
 
     def add_file_path(self, file_path: str) -> bool:
         """
@@ -226,6 +228,12 @@ class Chat:
                         print("Error decoding a line in chat history. Skipping.")
         return history
         
+    def lightRAG_enabled(self):
+        #if self.lightRAG_llm_model_name is not None:
+        #    return True
+        #return False
+        return self.light_rag_enabled
+        
     def summarize_history_enabled(self):
         """
         Indicates if LLM chat summarization is enabled
@@ -264,6 +272,15 @@ class Chat:
         self.llm_chat_summarizer = Local_LLM_Handler(model_name=chat_summarizer_llm_model_name, temperature=0.2)
         self.summarize_chat_countdown = self.max_messages_to_feed
         self.summarize_chat(self.chat_history, 10000)
+        
+    def set_lightRAG_llm_model(self, lightRAG_llm_model_name):
+        """
+        Initializes LLM for Light RAG.
+        
+        Args:
+            lightRAG_llm_model_name (str): The LLM model used for Light RAG.
+        """
+        self.lightRAG_llm_model_name = lightRAG_llm_model_name
         
     def summarize_chat(self, history: ChatMessageHistory, n_last_messages=1000):
         """
