@@ -9,6 +9,8 @@ import logging
 import logging.config
 from lightrag import LightRAG, QueryParam
 from lightrag.llm.openai import gpt_4o_mini_complete, openai_embed
+from lightrag.llm.ollama import ollama_model_complete, ollama_embed
+from lightrag.utils import EmbeddingFunc
 from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.utils import logger, set_verbose_debug
 
@@ -143,18 +145,12 @@ class LightRAG_OpenAI(LightRAG_Interface):
 
 
 class LightRAG_Local(LightRAG_Interface):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, working_dir, **kwargs):
+        super().__init__(working_dir=working_dir, llm_model_func=ollama_model_complete, llm_model_name="qwen3:latest", **kwargs)
         self.llm_model_max_async = kwargs.get('llm_model_max_async', 4)
         self.llm_model_max_token_size = kwargs.get('llm_model_max_token_size', 32768)
-        self.embedding_func = kwargs.get('embedding_func', EmbeddingFunc(
-            embedding_dim=768,
-            max_token_size=8192,
-            func=lambda texts: ollama_embed(texts, embed_model="nomic-embed-text", host="http://localhost:11434")
-        ))
-
+                
     async def initialize(self):
-        self.create_working_directory(self.working_dir)
         self.rag = LightRAG(
             working_dir=self.working_dir,
             llm_model_func=self.llm_model_func,
@@ -165,10 +161,19 @@ class LightRAG_Local(LightRAG_Interface):
                 "host": "http://localhost:11434",
                 "options": {"num_ctx": self.llm_model_max_token_size},
             },
-            embedding_func=self.embedding_func,
+            embedding_func=EmbeddingFunc(
+                embedding_dim=768,
+                max_token_size=8192,
+                func=lambda texts: ollama_embed(
+                    texts, embed_model="nomic-embed-text", host="http://localhost:11434"
+                ),
+            ),
         )
+
         await self.rag.initialize_storages()
         await initialize_pipeline_status()
+        
+        
 
     async def query(self, query, param):
         if self.rag:
@@ -176,45 +181,8 @@ class LightRAG_Local(LightRAG_Interface):
         else:
             raise Exception("LightRAG instance not initialized")
 
-    def insert(self, text):
+    async def insert(self, text):
         if self.rag:
             self.rag.insert(text)
         else:
             raise Exception("LightRAG instance not initialized")
-
-
-def main():
-    WORKING_DIR = "./dickens_ollama"
-    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
-
-    # Initialize LightRAGLocal instance
-    rag_local = LightRAGLocal(
-        working_dir=WORKING_DIR,
-        llm_model_func=ollama_model_complete,
-        llm_model_name="qwen2:latest"
-    )
-
-    # Initialize RAG instance
-    asyncio.run(rag_local.initialize())
-
-    # Insert example text
-    with open("./book.txt", "r", encoding="utf-8") as f:
-        rag_local.insert(f.read())
-        
-    query = "What is the main point of the story?"
-
-    # Start timing
-    start_time = time.time()
-    
-    print("\nHybrid Search:")
-    result = asyncio.run(rag_local.query(query, QueryParam(mode="hybrid")))
-    print(result)
-    
-    # End timing
-    end_time = time.time()
-
-    # Calculate and print the time taken
-    print(f"Operation took {end_time - start_time} seconds")
-
-if __name__ == "__main__":
-    main()
