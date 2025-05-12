@@ -9,6 +9,11 @@ from classes.LightRAG_Handler import LightRAG_Interface, LightRAG_OpenAI, LightR
 def main():
     WORKING_DIR = "./LightRAG_OpenAI"
     
+    text_file = "./chats/llm_sample_chat.json"
+    
+    if len(sys.argv) > 1:
+        text_file = sys.argv[1]
+    
     # Initialize LightRAGOpenAI instance
     rag_openai = LightRAG_OpenAI(
         working_dir=WORKING_DIR,
@@ -18,7 +23,7 @@ def main():
     asyncio.run(rag_openai.initialize())
 
     # Insert example text
-    with open("./chats/llm_sample_chat.json", "r", encoding="utf-8") as f:
+    with open(text_file, "r", encoding="utf-8") as f:
         asyncio.run(rag_openai.insert(f.read()))
     
     query = "What is the main point of the story?"
