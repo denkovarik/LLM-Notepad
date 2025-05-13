@@ -25,14 +25,8 @@ function OptionsTab() {
       setLightRAGEnabled(settingsData.lightRAGEnabled || false);
       setSummaryModel(settingsData.summaryModel || '');
       setMaxMessagesToFeed(settingsData.maxMessagesToFeed || 0);
-      // Check if 'qwen3:latest' is in modelsData.models
-      const qwen3LatestAvailable = (modelsData.models || []).includes('qwen3:latest');
-      // Check if 'nomic-embed-text:latest' is in modelsData.models
-      const nomicEmbedTextLatestAvailable = (modelsData.models || []).includes('nomic-embed-text:latest');
-      // Set lightRAGLLMModel to 'qwen3:latest' if it's available, otherwise use the current setting
-      setLightRAGLLMModel(qwen3LatestAvailable ? 'qwen3:latest' : undefined);
-      // Set lightRAGEmbedModel to 'nomic-embed-text:latest' if it's available, otherwise use the current setting
-      setLightRAGEmbedModel(nomicEmbedTextLatestAvailable ? 'nomic-embed-text:latest' : undefined);
+      setLightRAGLLMModel(settingsData.lightRAGLLMModel || undefined);
+      setLightRAGEmbedModel(settingsData.lightRAGEmbedModel || undefined);
       setLoading(false);
     })
     .catch(err => {
