@@ -38,6 +38,7 @@ class Chat:
         self.reference_files = set()
         self.light_rag_enabled = False
         self.lightRAG_llm_model_name = None
+        self.lightRAG_embed_model_name = None
 
     def add_file_path(self, file_path: str) -> bool:
         """
@@ -281,6 +282,15 @@ class Chat:
             lightRAG_llm_model_name (str): The LLM model used for Light RAG.
         """
         self.lightRAG_llm_model_name = lightRAG_llm_model_name
+        
+    def set_lightRAG_embed_model(self, lightRAG_embed_model_name):
+        """
+        Initializes the Embed model for Light RAG.
+        
+        Args:
+            lightRAG_embed_model_name (str): The Embed model used for Light RAG.
+        """
+        self.lightRAG_embed_model_name = lightRAG_embed_model_name
         
     def summarize_chat(self, history: ChatMessageHistory, n_last_messages=1000):
         """
