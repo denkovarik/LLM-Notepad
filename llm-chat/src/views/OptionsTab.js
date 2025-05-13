@@ -9,6 +9,7 @@ function OptionsTab() {
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
   const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
+  const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
@@ -22,8 +23,15 @@ function OptionsTab() {
       setSummarizeHistory(settingsData.summarizeHistory || false);
       setLightRAGEnabled(settingsData.lightRAGEnabled || false);
       setSummaryModel(settingsData.summaryModel || '');
-      setLightRAGLLMModel(settingsData.lightRAGLLMModel || '');
       setMaxMessagesToFeed(settingsData.maxMessagesToFeed || 0);
+      // Check if 'qwen3:latest' is in modelsData.models
+      const qwen3LatestAvailable = (modelsData.models || []).includes('qwen3:latest');
+      // Check if 'nomic-embed-text:latest' is in modelsData.models
+      const nomicEmbedTextLatestAvailable = (modelsData.models || []).includes('nomic-embed-text:latest');
+      // Set lightRAGLLMModel to 'qwen3:latest' if it's available, otherwise use the current setting
+      setLightRAGLLMModel(qwen3LatestAvailable ? 'qwen3:latest' : undefined);
+      // Set lightRAGEmbedModel to 'nomic-embed-text:latest' if it's available, otherwise use the current setting
+      setLightRAGEmbedModel(nomicEmbedTextLatestAvailable ? 'nomic-embed-text:latest' : undefined);
       setLoading(false);
     })
     .catch(err => {
@@ -102,11 +110,54 @@ function OptionsTab() {
     });
   };
   
+  const setLightRAGLLMModelServer = async (model) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/set_lightRAG_llm_model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set light RAG llm model.');
+      }
+
+      const data = await response.json();
+      console.log('Light RAG LLM model set successfully:', data);
+      return data;
+    } catch (error) {
+      console.error(`Error setting light RAG llm model: ${error.message}`);
+      throw error; // Re-throw the error for the caller to handle if necessary
+    }
+  };
+  
+  const setLightRAGEmbedModelServer = async (model) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/set_lightRAG_embed_model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set light RAG embed model.');
+      }
+
+      const data = await response.json();
+      console.log('Light RAG Embed model set successfully:', data);
+      return data;
+    } catch (error) {
+      console.error(`Error setting light RAG Embed model: ${error.message}`);
+      throw error; // Re-throw the error for the caller to handle if necessary
+    }
+  };
+  
   // Light RAG
   const handleLightRAGToggle = (e) => {
     const isChecked = e.target.checked;
   
     setLightRAGEnabled(isChecked);
+    
     fetch('http://localhost:8080/api/set_light_rag', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,12 +177,41 @@ function OptionsTab() {
       // Revert the state if the server call fails
       setLightRAGEnabled(!isChecked);
     });
+  
+    setLightRAGLLMModel(lightRAGLLMModel);
+    
+    if(lightRAGLLMModel !== undefined) {
+      try {
+        const responseData = setLightRAGLLMModelServer(lightRAGLLMModel);
+      } catch (error) {
+        setError(`Error setting light RAG llm model: ${error.message}`);
+      }
+    }
+    
+    if(lightRAGEmbedModel !== undefined) {
+      try {
+        const responseData = setLightRAGEmbedModelServer(lightRAGEmbedModel);
+      } catch (error) {
+        setError(`Error setting light RAG embed model: ${error.message}`);
+      }
+    }
   };
   
   const handleLightRAGLLMModelChange = (e) => {
     setLightRAGLLMModel(e.target.value);
     setError(null); // Clear error message when user selects a model
-    fetch('http://localhost:8080/api/set_lightRAG_llm_model', {
+    
+    try {
+      const responseData = setLightRAGLLMModelServer(e.target.value);
+    } catch (error) {
+      setError(`Error setting light RAG llm model: ${error.message}`);
+    }
+  };
+  
+  const handleLightRAGEmbedModelChange = (e) => {
+    setLightRAGEmbedModel(e.target.value);
+    setError(null); // Clear error message when user selects a model
+    fetch('http://localhost:8080/api/set_lightRAG_embed_model', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: e.target.value })
@@ -146,7 +226,7 @@ function OptionsTab() {
       console.log(data);
     })
     .catch(error => {
-      setError(`Error setting light RAG llm model: ${error.message}`);
+      setError(`Error setting light RAG embed model: ${error.message}`);
     });
   };
 
@@ -226,11 +306,27 @@ function OptionsTab() {
               ))}
             </select>
           )}
-        </div>       
+        </div>    
+        <div>
+          <label>Embed Model: </label>
+          {loading ? (
+            <span>Loading...</span>
+          ) : (
+            <select 
+              value={lightRAGEmbedModel} 
+              onChange={handleLightRAGEmbedModelChange}
+              disabled={!lightRAGEnabled}
+            >
+              <option value="">--Please choose a model--</option>
+              {availableModels.map(model => (
+                <option key={model} value={model}>{model}</option>
+              ))}
+            </select>
+          )}
+        </div>         
         {error && <p className="error-message">{error}</p>}
       </section>
 
-      <p>Coming soon: File upload, settings, etc.</p>
     </div>
   );
 }

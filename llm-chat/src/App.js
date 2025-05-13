@@ -35,6 +35,7 @@ export default function App() {
   
   const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
+  const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
 
   /* 1) Fetch models once on mount */
   useEffect(() => {
@@ -241,7 +242,9 @@ export default function App() {
           lightRAGEnabled={lightRAGEnabled}
           setLightRAGEnabled={setLightRAGEnabled}
           lightRAGLLMModel={lightRAGLLMModel}
-          setLightRAGLLMModel={setLightRAGLLMModel}          
+          setLightRAGLLMModel={setLightRAGLLMModel}
+          lightRAGEmbedModel={lightRAGEmbedModel}
+          setLightRAGEmbedModel={setLightRAGEmbedModel}     
         />
       )}
     </div>
