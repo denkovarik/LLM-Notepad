@@ -287,6 +287,17 @@ def set_lightRAG_embed_model(selection: ModelSelection, request: Request):
     print(message)
     
     return {"detail": f"Light RAG Embed model set to {model_name}"}
+    
+@app.post("/api/initialize_light_rag") 
+def init_light_rag(request: Request):
+    st = request.app.state.state
+    
+    # Logic 
+    
+    message = {"detail": f"Light RAG has been initialized with LLM model set to {st.chat.lightRAG_llm_model_name} and the Embed model set to {st.chat.lightRAG_embed_model_name}"}
+    print(message)
+    
+    return message
 
 def load_model(model_name: str, request: Request):
     """
