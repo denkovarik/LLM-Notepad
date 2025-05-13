@@ -10,6 +10,7 @@ function OptionsTab() {
   const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
   const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
+  const [initializing, setInitializing] = useState(false);
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
@@ -230,25 +231,29 @@ function OptionsTab() {
     });
   };
   
-  // Function to handle the 'Initialize' button click
   const handleInitialize = () => {
-    fetch('http://localhost:8080/api/initialize_light_rag', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to initialize Light RAG.');
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Light RAG initialized:', data);
-      // Here you might want to show a success message to the user or update the UI
-    })
-    .catch(error => {
-      setError(`Error initializing Light RAG: ${error.message}`);
-    });
+    if (lightRAGEnabled) {
+      setInitializing(true);
+      fetch('http://localhost:8080/api/initialize_light_rag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to initialize Light RAG.');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Light RAG initialized:', data);
+        setInitializing(false);
+      })
+      .catch(error => {
+        console.error(`Error initializing Light RAG: ${error.message}`);
+        setInitializing(false);
+        setError(`Error initializing Light RAG: ${error.message}`);
+      });
+    }
   };
 
   return (
@@ -319,7 +324,7 @@ function OptionsTab() {
             <select 
               value={lightRAGLLMModel} 
               onChange={handleLightRAGLLMModelChange}
-              disabled={!lightRAGEnabled}
+              disabled={!lightRAGEnabled || initializing}
             >
               <option value="">--Please choose a model--</option>
               {availableModels.map(model => (
@@ -336,7 +341,7 @@ function OptionsTab() {
             <select 
               value={lightRAGEmbedModel} 
               onChange={handleLightRAGEmbedModelChange}
-              disabled={!lightRAGEnabled}
+              disabled={!lightRAGEnabled || initializing}
             >
               <option value="">--Please choose a model--</option>
               {availableModels.map(model => (
@@ -347,13 +352,13 @@ function OptionsTab() {
         </div>         
         {error && <p className="error-message">{error}</p>}
         
-        <div style={{ marginTop: '10px' }}>
+        <div style={{ marginTop: '10px', marginLeft: '20px' }}>
           <button 
             onClick={handleInitialize} 
-            disabled={!lightRAGEnabled} 
-            style={{ marginLeft: '20px', width: '120px' }}
+            disabled={!lightRAGEnabled || initializing}
+            style={{ width: '200px' }}
           >
-            Initialize
+            {initializing ? 'Initializing...' : 'Initialize Light RAG'}
           </button>
         </div>
       </section>
