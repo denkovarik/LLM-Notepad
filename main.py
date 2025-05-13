@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing import List, Dict
 import subprocess
 import tempfile
+import time
 
 from classes.Local_LLM_Handler import Local_LLM_Handler
 from classes.Grok_Handler import Grok_Handler
@@ -293,6 +294,7 @@ def init_light_rag(request: Request):
     st = request.app.state.state
     
     # Logic 
+    time.sleep(30)
     
     message = {"detail": f"Light RAG has been initialized with LLM model set to {st.chat.lightRAG_llm_model_name} and the Embed model set to {st.chat.lightRAG_embed_model_name}"}
     print(message)
