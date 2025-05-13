@@ -229,6 +229,27 @@ function OptionsTab() {
       setError(`Error setting light RAG embed model: ${error.message}`);
     });
   };
+  
+  // Function to handle the 'Initialize' button click
+  const handleInitialize = () => {
+    fetch('http://localhost:8080/api/initialize_light_rag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to initialize Light RAG.');
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Light RAG initialized:', data);
+      // Here you might want to show a success message to the user or update the UI
+    })
+    .catch(error => {
+      setError(`Error initializing Light RAG: ${error.message}`);
+    });
+  };
 
   return (
     <div className="options-container" style={{ textAlign: 'left' }}>
@@ -325,6 +346,16 @@ function OptionsTab() {
           )}
         </div>         
         {error && <p className="error-message">{error}</p>}
+        
+        <div style={{ marginTop: '20px' }}>
+          <button 
+            onClick={handleInitialize} 
+            disabled={!lightRAGEnabled} 
+            style={{ marginLeft: '20px', width: '120px' }}
+          >
+            Initialize
+          </button>
+        </div>
       </section>
 
     </div>
