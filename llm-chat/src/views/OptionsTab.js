@@ -347,7 +347,7 @@ function OptionsTab() {
         </div>         
         {error && <p className="error-message">{error}</p>}
         
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ marginTop: '10px' }}>
           <button 
             onClick={handleInitialize} 
             disabled={!lightRAGEnabled} 
