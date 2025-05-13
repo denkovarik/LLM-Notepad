@@ -306,6 +306,7 @@ function OptionsTab() {
               value={true}
               checked={lightRAGEnabled}
               onChange={handleLightRAGToggle}
+              disabled={initializing}
             />
             Enable Light RAG
           </label>
