@@ -27,7 +27,10 @@ class AppState:
         self.chat = Chat(None)
         self.chat_summarizer_llm_model_name = None
         self.light_rag_enabled = False
+        ollama_output = ollama.list()
+        self.ollama_models = [m.model for m in ollama_output.models] if ollama_output and ollama_output.models else []
         self.lightRAG_llm_model_name = None
+        self.lightRAG_embed_model_name = None
 
 app = FastAPI()
 app.add_middleware(
@@ -189,6 +192,7 @@ def get_settings(request: Request):
         "maxMessagesToFeed": st.chat.max_messages_to_feed,
         "lightRAGEnabled": st.chat.lightRAG_enabled(),
         "lightRAGLLMModel": st.chat.lightRAG_llm_model_name,
+        "lightRAGEmbedModel": st.chat.lightRAG_embed_model_name,
     }
     
 class MaxMessages(BaseModel):
@@ -236,16 +240,20 @@ class LightRAGToggle(BaseModel):
 
 @app.post("/api/set_light_rag")
 def set_light_rag(selection: LightRAGToggle, request: Request):
-    print("Hello")
     st = request.app.state.state
-    print(selection.lightRAGEnabled)
     st.chat.light_rag_enabled = selection.lightRAGEnabled
-    return {"detail": "Light RAG setting updated"}
+    message = "Que?"
+    if selection.lightRAGEnabled:
+        message = {"detail": "Light RAG has been Enabled"}
+    else:
+        message = {"detail": "Light RAG has been Disabled"}
+    print(message)
+    return message
     
 @app.post("/api/set_lightRAG_llm_model") 
 def set_lightRAG_llm_model(selection: ModelSelection, request: Request):
     model_name = selection.model.strip()
-    print(model_name)
+    
     installed = list_ollama_models()
     if model_name not in installed and model_name not in ONLINE_MODELS:
         raise HTTPException(status_code=400, detail="Model not found.")
@@ -255,8 +263,30 @@ def set_lightRAG_llm_model(selection: ModelSelection, request: Request):
     
     if st.chat:
         st.chat.set_lightRAG_llm_model(st.lightRAG_llm_model_name)
+        
+    message = {"detail": f"Light RAG LLM model set to {model_name}"}
+    print(message)
     
-    return {"detail": f"Light RAG LLM model set to {model_name}"}
+    return message
+    
+@app.post("/api/set_lightRAG_embed_model") 
+def set_lightRAG_embed_model(selection: ModelSelection, request: Request):
+    model_name = selection.model.strip()
+    
+    installed = list_ollama_models()
+    if model_name not in installed and model_name not in ONLINE_MODELS:
+        raise HTTPException(status_code=400, detail="Model not found.")
+    
+    st = request.app.state.state
+    st.lightRAG_embed_model_name = model_name
+    
+    if st.chat:
+        st.chat.set_lightRAG_embed_model(st.lightRAG_embed_model_name)
+    
+    message = {"detail": f"Light RAG Embed model set to {model_name}"}
+    print(message)
+    
+    return {"detail": f"Light RAG Embed model set to {model_name}"}
 
 def load_model(model_name: str, request: Request):
     """
