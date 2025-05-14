@@ -109,23 +109,26 @@ def create_chat(request: CreateChatRequest):
     if not os.path.exists(CHATS_DIR):
         os.makedirs(CHATS_DIR)
 
-    # Clean up user name if you want to remove spaces or special characters
     chat_name = request.name.strip().replace(" ", "_").replace("/", "_")
-    chat_filename = f"{chat_name}.json"  # directly use that name as filename
-    file_path = os.path.join(CHATS_DIR, chat_filename)
+    print(chat_name)
+    dir_path = os.path.join(CHATS_DIR, chat_name)
+    print(dir_path)
     
     cnt = 1 
-    while os.path.exists(file_path):
-        chat_filename = f"{chat_name} ({cnt}).json"  # directly use that name as filename
-        file_path = os.path.join(CHATS_DIR, chat_filename)
+    while os.path.exists(dir_path):
+        chat_name = f"{chat_name} ({cnt})"  
+        dir_path = os.path.join(CHATS_DIR, chat_name)
         cnt += 1
+    os.mkdir(dir_path)
+        
+    chat_filename = f"{chat_name}.json"
+    file_path = os.path.join(dir_path, chat_filename)
 
     # Create empty or minimal content
     with open(file_path, 'w') as f:
-        # Possibly write an empty JSON lines or an empty JSON array
-        f.write("")  # or f.write("[]")
+        f.write("")
 
-    return {"chat_id": chat_filename}
+    return {"chat_id": chat_name}
 
 @app.get("/api/chats")
 def list_chats():
@@ -134,18 +137,28 @@ def list_chats():
     """
     if not os.path.exists(CHATS_DIR):
         os.makedirs(CHATS_DIR)
+        
+    items = os.listdir(CHATS_DIR)
 
-    files = os.listdir(CHATS_DIR)
-    chat_files = [f for f in files if f.endswith(".json")]
-    return {"chats": chat_files}
+    # Filter out only directories and check for corresponding JSON file
+    chat_folders = [
+        item for item in items 
+        if os.path.isdir(os.path.join(CHATS_DIR, item)) 
+        and os.path.isfile(os.path.join(CHATS_DIR, item, f"{item}.json"))
+    ]
+    
+    return {"chats": chat_folders}
 
 @app.get("/api/chats/{chat_id}")
 def load_chat(chat_id: str, request: Request):
     """
     Loads the selected chat from the UI.
     """  
+    print('yo')
+    print(chat_id)
     st = request.app.state.state
-    file_path = os.path.join(CHATS_DIR, chat_id) if chat_id != "None" else None
+    file_path = os.path.join(CHATS_DIR, chat_id, chat_id + '.json') if chat_id != "None" else None
+    print(file_path)
     st.chat = Chat(file_path)
 
     # Convert chat to JSON

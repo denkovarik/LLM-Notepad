@@ -83,6 +83,7 @@ export default function App() {
       }
       const data = await res.json();
       if (data.chat_id) {
+        console.log(data.chat_id);
         // Add new chat to the list, select it
         setChatList((prev) => [...prev, data.chat_id]);
         setSelectedChat(data.chat_id);
