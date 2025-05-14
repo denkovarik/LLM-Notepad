@@ -18,6 +18,7 @@ from classes.Chat import Chat
 
 CHATS_DIR = "./chats"
 ONLINE_MODELS = ["Grok", "ChatGPT"]
+ONLINE_MODELS_LIGHT_RAG = ["ChatGPT"]
 BASE_DIR_PATH = "C:\\"
 BASE_DIR_PATH = '/home'
 
@@ -166,7 +167,13 @@ def list_ollama_models():
 @app.get("/api/models")
 def get_models():
     models = list_ollama_models()
-    models += ["Grok", "ChatGPT"]
+    models += ONLINE_MODELS
+    return {"models": models}
+    
+@app.get("/api/light_rag_models")
+def get_light_rag_models():
+    models = list_ollama_models()
+    models += ONLINE_MODELS_LIGHT_RAG
     return {"models": models}
 
 class ModelSelection(BaseModel):

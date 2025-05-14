@@ -4,6 +4,7 @@ function OptionsTab() {
   const [summarizeHistory, setSummarizeHistory] = useState(false);
   const [summaryModel, setSummaryModel] = useState('');
   const [availableModels, setAvailableModels] = useState([]);
+  const [availableModelsLightRAG, setAvailableModelsLightRAG] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
@@ -17,10 +18,12 @@ function OptionsTab() {
     setLoading(true);
     Promise.all([
       fetch('http://localhost:8080/api/models').then(res => res.json()),
+      fetch('http://localhost:8080/api/light_rag_models').then(res => res.json()),
       fetch('http://localhost:8080/api/get_settings').then(res => res.json())
     ])
-    .then(([modelsData, settingsData]) => {        
+    .then(([modelsData, modelsDataLightRAG, settingsData]) => {        
       setAvailableModels(modelsData.models || []);
+      setAvailableModelsLightRAG(modelsDataLightRAG.models || []);
       setSummarizeHistory(settingsData.summarizeHistory || false);
       setLightRAGEnabled(settingsData.lightRAGEnabled || false);
       setSummaryModel(settingsData.summaryModel || '');
@@ -177,7 +180,7 @@ function OptionsTab() {
     
     if(lightRAGLLMModel !== undefined) {
       try {
-        const responseData = setLightRAGLLMModelServer(lightRAGLLMModel);
+        setLightRAGLLMModelServer(lightRAGLLMModel);
       } catch (error) {
         setError(`Error setting light RAG llm model: ${error.message}`);
       }
@@ -185,7 +188,7 @@ function OptionsTab() {
     
     if(lightRAGEmbedModel !== undefined) {
       try {
-        const responseData = setLightRAGEmbedModelServer(lightRAGEmbedModel);
+        setLightRAGEmbedModelServer(lightRAGEmbedModel);
       } catch (error) {
         setError(`Error setting light RAG embed model: ${error.message}`);
       }
@@ -197,7 +200,7 @@ function OptionsTab() {
     setError(null); // Clear error message when user selects a model
     
     try {
-      const responseData = setLightRAGLLMModelServer(e.target.value);
+      setLightRAGLLMModelServer(e.target.value);
     } catch (error) {
       setError(`Error setting light RAG llm model: ${error.message}`);
     }
@@ -322,7 +325,7 @@ function OptionsTab() {
               disabled={!lightRAGEnabled || initializing}
             >
               <option value="">--Please choose a model--</option>
-              {availableModels.map(model => (
+              {availableModelsLightRAG.map(model => (
                 <option key={model} value={model}>{model}</option>
               ))}
             </select>
@@ -339,7 +342,7 @@ function OptionsTab() {
               disabled={!lightRAGEnabled || initializing}
             >
               <option value="">--Please choose a model--</option>
-              {availableModels.map(model => (
+              {availableModelsLightRAG.map(model => (
                 <option key={model} value={model}>{model}</option>
               ))}
             </select>
