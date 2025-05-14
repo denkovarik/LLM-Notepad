@@ -8,6 +8,8 @@ import ChatTab from './views/ChatTab';
 import OptionsTab from './views/OptionsTab';
 import { useDarkMode } from './hooks/useDarkMode';
 
+// Global variable to track Light RAG initialization status
+window.lightRAGInitializing = false;
 
 export default function App() {
   // Chat + UI states
@@ -146,6 +148,30 @@ export default function App() {
   const toggleHeader = () => {
     setHeaderCollapsed(prev => !prev);
   };
+  
+  // Initialize Light RAG with an asynchronous call
+  const initializeLightRAG = async () => {
+    if (lightRAGEnabled) {
+      setInitializing(true);
+      window.lightRAGInitializing = true;
+      try {
+        const response = await fetch('http://localhost:8080/api/initialize_light_rag', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to initialize Light RAG.');
+        }
+        const data = await response.json();
+        console.log('Light RAG initialized:', data);
+      } catch (error) {
+        console.error(`Error initializing Light RAG: ${error.message}`);
+      } finally {
+        window.lightRAGInitializing = false;
+        setInitializing(false);
+      }
+    }
+  };
 
   return (
     <div className={`App ${isDarkMode ? 'dark-mode' : ''}`}>
@@ -246,8 +272,8 @@ export default function App() {
           setLightRAGLLMModel={setLightRAGLLMModel}
           lightRAGEmbedModel={lightRAGEmbedModel}
           setLightRAGEmbedModel={setLightRAGEmbedModel}     
-          initializing={initializing}
-          setInitializing={setInitializing}  
+          initializing={window.lightRAGInitializing} // Use the global variable
+          initializeLightRAG={initializeLightRAG} // Pass the function to OptionsTab 
         />
       )}
     </div>

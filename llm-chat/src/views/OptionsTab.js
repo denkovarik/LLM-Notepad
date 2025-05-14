@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function OptionsTab() {
+function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, initializing }) {
   const [summarizeHistory, setSummarizeHistory] = useState(false);
   const [summaryModel, setSummaryModel] = useState('');
   const [availableModels, setAvailableModels] = useState([]);
@@ -8,10 +8,9 @@ function OptionsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
-  const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
   const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
-  const [initializing, setInitializing] = useState(false);
+  const [setInitializing] = useState(false);
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
@@ -228,29 +227,33 @@ function OptionsTab() {
     });
   };
   
+  //const handleInitialize = () => {
+  //  if (lightRAGEnabled) {
+  //    setInitializing(true);
+  //    fetch('http://localhost:8080/api/initialize_light_rag', {
+  //      method: 'POST',
+  //      headers: { 'Content-Type': 'application/json' }
+  //    })
+  //    .then(response => {
+  //      if (!response.ok) {
+  //        throw new Error('Failed to initialize Light RAG.');
+  //      }
+  //      return response.json();
+  //    })
+  //    .then(data => {
+  //      console.log('Light RAG initialized:', data);
+  //      setInitializing(false);
+  //    })
+  //    .catch(error => {
+  //      console.error(`Error initializing Light RAG: ${error.message}`);
+  //      setInitializing(false);
+  //      setError(`Error initializing Light RAG: ${error.message}`);
+  //    });
+  //  }
+  //};
+  
   const handleInitialize = () => {
-    if (lightRAGEnabled) {
-      setInitializing(true);
-      fetch('http://localhost:8080/api/initialize_light_rag', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to initialize Light RAG.');
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Light RAG initialized:', data);
-        setInitializing(false);
-      })
-      .catch(error => {
-        console.error(`Error initializing Light RAG: ${error.message}`);
-        setInitializing(false);
-        setError(`Error initializing Light RAG: ${error.message}`);
-      });
-    }
+    initializeLightRAG();
   };
 
   return (
