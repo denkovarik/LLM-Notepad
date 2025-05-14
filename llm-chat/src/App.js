@@ -38,7 +38,7 @@ export default function App() {
   const [lightRAGEnabled, setLightRAGEnabled] =useState(false);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
   const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
-  const [initializing, setInitializing] = useState(false);
+  var [lightRAGInitializing, setInitializing] = useState(false);
 
   /* 1) Fetch models once on mount */
   useEffect(() => {
@@ -153,7 +153,8 @@ export default function App() {
   const initializeLightRAG = async () => {
     if (lightRAGEnabled) {
       setInitializing(true);
-      window.lightRAGInitializing = true;
+      lightRAGInitializing = true;
+      window.lightRAGInitializing = lightRAGInitializing;
       try {
         const response = await fetch('http://localhost:8080/api/initialize_light_rag', {
           method: 'POST',
@@ -167,7 +168,8 @@ export default function App() {
       } catch (error) {
         console.error(`Error initializing Light RAG: ${error.message}`);
       } finally {
-        window.lightRAGInitializing = false;
+        lightRAGInitializing = false;
+        window.lightRAGInitializing = lightRAGInitializing;
         setInitializing(false);
       }
     }
@@ -259,6 +261,7 @@ export default function App() {
           setUserInputHeight={setUserInputHeight}
           setMessages={setMessages}
           setLoading={setLoading}
+          lightRAGInitializing={window.lightRAGInitializing}
         />
       ) : (
         <OptionsTab 
@@ -272,8 +275,8 @@ export default function App() {
           setLightRAGLLMModel={setLightRAGLLMModel}
           lightRAGEmbedModel={lightRAGEmbedModel}
           setLightRAGEmbedModel={setLightRAGEmbedModel}     
-          initializing={window.lightRAGInitializing} // Use the global variable
-          initializeLightRAG={initializeLightRAG} // Pass the function to OptionsTab 
+          lightRAGInitializing={window.lightRAGInitializing} 
+          initializeLightRAG={initializeLightRAG} 
         />
       )}
     </div>

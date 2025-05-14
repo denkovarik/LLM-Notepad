@@ -5,7 +5,7 @@ import UserInput from '../components/UserInput';
 import '../App.css';
 
 
-function ChatTab({ messages, loading, isDarkMode, userInputHeight, chatWindowRef, userMessage, setUserMessage, setUserInputHeight, setMessages, setLoading }) {
+function ChatTab({ messages, loading, isDarkMode, userInputHeight, chatWindowRef, userMessage, setUserMessage, setUserInputHeight, setMessages, setLoading, lightRAGInitializing  }) {
   // Scroll chat to bottom on new messages
   useEffect(() => {
     if (chatWindowRef.current) {
@@ -77,12 +77,14 @@ function ChatTab({ messages, loading, isDarkMode, userInputHeight, chatWindowRef
   /* 10) Submit form */
   function handleSubmit(e) {
     e.preventDefault();
-    sendMessage();
+    if(!lightRAGInitializing) {
+      sendMessage();
+    }
   }
 
   /* 11) SHIFT+Enter vs Enter */
   function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !lightRAGInitializing) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -109,6 +111,7 @@ function ChatTab({ messages, loading, isDarkMode, userInputHeight, chatWindowRef
         setUserMessage={setUserMessage}
         handleSubmit={handleSubmit}
         handleKeyDown={handleKeyDown}
+        lightRAGInitializing={lightRAGInitializing}
       />
     </div>
   );

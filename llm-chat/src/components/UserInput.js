@@ -2,7 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Resizer from './Resizer';
 
-function UserInput({ userInputHeight, setUserInputHeight, isDarkMode, userMessage, setUserMessage, handleSubmit, handleKeyDown }) {
+function UserInput({ userInputHeight, setUserInputHeight, isDarkMode, userMessage, setUserMessage, handleSubmit, handleKeyDown, lightRAGInitializing }) {
+  const buttonText = lightRAGInitializing ? 'Initializing Light RAG...' : 'Send';
+    
   return (
       <div className={`user-input-container ${isDarkMode ? 'dark-mode' : ''}`} style={{ height: userInputHeight }}>
         <Resizer height={userInputHeight} setHeight={setUserInputHeight} isDarkMode={isDarkMode} />
@@ -17,7 +19,7 @@ function UserInput({ userInputHeight, setUserInputHeight, isDarkMode, userMessag
             onKeyDown={handleKeyDown}
           />
           <button type="submit" className="send-button">
-            Send
+            {buttonText}
           </button>
         </form>
       </div>
