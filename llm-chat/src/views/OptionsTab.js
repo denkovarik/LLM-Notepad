@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, initializing }) {
+function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, lightRAGInitializing }) {
   const [summarizeHistory, setSummarizeHistory] = useState(false);
   const [summaryModel, setSummaryModel] = useState('');
   const [availableModels, setAvailableModels] = useState([]);
@@ -10,7 +10,6 @@ function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, i
   const [maxMessagesToFeed, setMaxMessagesToFeed] = useState(0);
   const [lightRAGLLMModel, setLightRAGLLMModel] = useState('');
   const [lightRAGEmbedModel, setLightRAGEmbedModel] = useState('');
-  const [setInitializing] = useState(false);
 
   // Fetch settings from the server when component mounts or when active tab changes to OptionsTab
   useEffect(() => {
@@ -287,7 +286,7 @@ function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, i
               value={true}
               checked={lightRAGEnabled}
               onChange={handleLightRAGToggle}
-              disabled={initializing}
+              disabled={lightRAGInitializing}
             />
             Enable Light RAG
           </label>
@@ -300,7 +299,7 @@ function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, i
             <select 
               value={lightRAGLLMModel} 
               onChange={handleLightRAGLLMModelChange}
-              disabled={!lightRAGEnabled || initializing}
+              disabled={!lightRAGEnabled || lightRAGInitializing}
             >
               <option value="">--Please choose a model--</option>
               {availableModelsLightRAG.map(model => (
@@ -317,7 +316,7 @@ function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, i
             <select 
               value={lightRAGEmbedModel} 
               onChange={handleLightRAGEmbedModelChange}
-              disabled={!lightRAGEnabled || initializing}
+              disabled={!lightRAGEnabled || lightRAGInitializing}
             >
               <option value="">--Please choose a model--</option>
               {availableModelsLightRAG.map(model => (
@@ -331,10 +330,10 @@ function OptionsTab({ lightRAGEnabled, setLightRAGEnabled, initializeLightRAG, i
         <div style={{ marginTop: '10px', marginLeft: '20px' }}>
           <button 
             onClick={handleInitialize} 
-            disabled={!lightRAGEnabled || initializing}
+            disabled={!lightRAGEnabled || lightRAGInitializing}
             style={{ width: '200px' }}
           >
-            {initializing ? 'Initializing...' : 'Initialize Light RAG'}
+            {lightRAGInitializing ? 'Initializing...' : 'Initialize Light RAG'}
           </button>
         </div>
       </section>
