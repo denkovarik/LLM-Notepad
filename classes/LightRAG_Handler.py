@@ -149,9 +149,12 @@ class LightRAG_Local(LightRAG_Interface):
         super().__init__(working_dir=working_dir, llm_model_func=ollama_model_complete, llm_model_name="qwen3:latest", **kwargs)
         self.llm_model_max_async = kwargs.get('llm_model_max_async', 4)
         self.llm_model_max_token_size = kwargs.get('llm_model_max_token_size', 32768)
+        
+    def initialize(self):
+        self.rag = asyncio.run(self.initialize_rag())
                 
-    async def initialize(self):
-        self.rag = LightRAG(
+    async def initialize_rag(self):
+        rag = LightRAG(
             working_dir=self.working_dir,
             llm_model_func=self.llm_model_func,
             llm_model_name=self.llm_model_name,
@@ -170,18 +173,18 @@ class LightRAG_Local(LightRAG_Interface):
             ),
         )
 
-        await self.rag.initialize_storages()
+        await rag.initialize_storages()
         await initialize_pipeline_status()
         
-        
+        return rag
 
-    async def query(self, query, param):
+    def query(self, query, param):
         if self.rag:
             return self.rag.query(query, param)
         else:
             raise Exception("LightRAG instance not initialized")
 
-    async def insert(self, text):
+    def insert(self, text):
         if self.rag:
             self.rag.insert(text)
         else:

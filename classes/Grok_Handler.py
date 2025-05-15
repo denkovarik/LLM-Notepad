@@ -33,7 +33,7 @@ class Grok_Handler(LLM_Handler):
                  history: Optional[ChatMessageHistory] = None, 
                  chat_summary: str = None, 
                  n_last_messages: int = 10, 
-                 reference_files: str = None) -> str:
+                 light_rag_result: str = None) -> str:
         """
         Get a response from Grok based on the prompt and conversation history.
 
@@ -42,7 +42,7 @@ class Grok_Handler(LLM_Handler):
             history (ChatMessageHistory, optional): The conversation history.
             chat_summary (str): Summary of chat history.
             n_last_messages (int): The last n messages to feed to the LLM
-            reference_files: A set of related reference files to feed to the LLM.
+            light_rag_result: String of results for querying Light RAG.
 
         Returns:
             str: The assistant's response.
@@ -50,9 +50,7 @@ class Grok_Handler(LLM_Handler):
         # Prepare the messages for the API call
         messages = []
         if history:
-            messages = self.convert_messages(history.messages, n_last_messages, chat_summary)
-        # Append reference files to messages    
-        messages = self.add_reference_files(messages, reference_files)   
+            messages = self.convert_messages(history.messages, n_last_messages, chat_summary, light_rag_rslt=light_rag_result) 
         # Add the current user prompt
         messages.append({"role": "user", "content": prompt})
 
@@ -68,6 +66,7 @@ class Grok_Handler(LLM_Handler):
         }
 
         try:
+            #print(payload)
             response = requests.post(self.base_url, json=payload, headers=headers)
             response.raise_for_status()  # Raise an error for HTTP codes 4xx/5xx
             assistant_message = response.json()["choices"][0]["message"]["content"]

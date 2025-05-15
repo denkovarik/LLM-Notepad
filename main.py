@@ -10,6 +10,7 @@ from typing import List, Dict
 import subprocess
 import tempfile
 import time
+import asyncio
 
 from classes.Local_LLM_Handler import Local_LLM_Handler
 from classes.Grok_Handler import Grok_Handler
@@ -154,11 +155,8 @@ def load_chat(chat_id: str, request: Request):
     """
     Loads the selected chat from the UI.
     """  
-    print('yo')
-    print(chat_id)
     st = request.app.state.state
     file_path = os.path.join(CHATS_DIR, chat_id, chat_id + '.json') if chat_id != "None" else None
-    print(file_path)
     st.chat = Chat(file_path)
 
     # Convert chat to JSON
@@ -316,7 +314,7 @@ def init_light_rag(request: Request):
     st = request.app.state.state
     
     # Logic 
-    time.sleep(30)
+    st.chat.initialize_light_rag()
     
     message = {"detail": f"Light RAG has been initialized with LLM model set to {st.chat.lightRAG_llm_model_name} and the Embed model set to {st.chat.lightRAG_embed_model_name}"}
     print(message)

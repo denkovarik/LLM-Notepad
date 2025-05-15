@@ -7,9 +7,15 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from typing import List, Optional
 import configparser
 from yaspin import yaspin
+import asyncio
 from classes.Local_LLM_Handler import Local_LLM_Handler 
 from classes.Grok_Handler import Grok_Handler 
 from classes.ChatGPT_Handler import ChatGPT_Handler
+from lightrag import LightRAG, QueryParam
+from lightrag.llm.openai import gpt_4o_mini_complete, openai_embed
+from classes.LightRAG_Handler import LightRAG_Interface, LightRAG_OpenAI, LightRAG_Local
+from lightrag import LightRAG, QueryParam
+from lightrag.llm.ollama import ollama_model_complete, ollama_embed
 
 
 class Chat:
@@ -37,8 +43,10 @@ class Chat:
             self.set_llm_chat_summarizer(self.chat_summarizer_llm_model_name)
         self.reference_files = set()
         self.light_rag_enabled = False
+        self.light_rag_working_dir = None
         self.lightRAG_llm_model_name = None
         self.lightRAG_embed_model_name = None
+        self.lightRAG = None
 
     def add_file_path(self, file_path: str) -> bool:
         """
@@ -139,6 +147,16 @@ class Chat:
         """
         response = ''    
         spinner_active = True
+        
+        light_rag_result = None
+        #if self.lightRAG_enabled and self.lightRAG is not None:
+        #    with yaspin(text='Light RAG: ', spinner='dots', side='right') as spinner:
+        #        try:
+        #            light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"))
+        #            print(light_rag_result)
+        #        except Exception as e:
+        #            spinner.stop()  # Stop spinner on error
+        #            raise e
 
         with yaspin(text=AI.get_llm_name() + ': ', spinner='dots', side='right') as spinner:
             try:
@@ -146,7 +164,7 @@ class Chat:
                                              history=self.chat_history, 
                                              chat_summary=self.chat_summary, 
                                              n_last_messages=self.max_messages_to_feed, 
-                                             reference_files=self.reference_files):
+                                             light_rag_result=light_rag_result):
                     # Stop the spinner once we start receiving data
                     if spinner_active:
                         spinner.stop()
@@ -201,6 +219,39 @@ class Chat:
         """
         user_input = input("You: ").strip()
         return user_input
+        
+    def initialize_light_rag(self):
+        """
+        Sets up and initializes Light RAG for the Chat
+        """
+        if self.chat_history_file is None:
+            return
+
+        dir_path = os.path.dirname(self.chat_history_file)
+        
+        if self.lightRAG_llm_model_name == 'ChatGPT' \
+        or self.lightRAG_embed_model_name == 'ChatGPT':
+            print('Using ChatGPT for Light RAG')
+            self.lightRAG_llm_model_name = 'ChatGPT'
+            self.lightRAG_embed_model_name = 'ChatGPT'
+            self.light_rag_working_dir = os.path.join(dir_path, 'LightRAG_OpenAI')      
+            # Initialize LightRAGOpenAI instance
+            #self.lightRAG = LightRAG_OpenAI(
+            #    working_dir=self.light_rag_working_dir,
+            #)        
+        else: 
+            print('Using Ollama for Light RAG')
+            self.light_rag_working_dir = os.path.join(dir_path, 'LightRAG_Ollama')
+            # Initialize LightRAGOpenAI instance
+            self.lightRAG = LightRAG_Local(
+                working_dir=self.light_rag_working_dir
+            )
+            
+        # Initialize RAG instance
+        self.lightRAG.initialize()
+        # Read Text
+        with open(self.chat_history_file, "r", encoding="utf-8") as f:
+            self.lightRAG.insert(f.read())
             
     def load_chat_history(self, chat_history_file):
         """

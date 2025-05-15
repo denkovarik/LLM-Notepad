@@ -44,7 +44,7 @@ class Local_LLM_Handler(LLM_Handler):
         messages = []          
         
         if history:
-            messages = self.convert_messages(history.messages, n_last_messages, chat_summary, messages=messages)         
+            messages = self.convert_messages(history.messages, n_last_messages, chat_summary, messages=messages, light_rag_rslt=light_rag_result)         
 
         # Append the current prompt
         messages.append({"role": "user", "content": prompt})
