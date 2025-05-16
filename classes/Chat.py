@@ -152,6 +152,9 @@ class Chat:
         light_rag_result = None
         
         conversation = self.chat_history
+        
+        if self.lightRAG is None:
+            self.lightRAG_enabled = False
 
         with yaspin(text=AI.get_llm_name() + ': ', spinner='dots', side='right') as spinner:
             try:
