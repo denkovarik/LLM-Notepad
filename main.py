@@ -236,6 +236,7 @@ def disable_summarization(request: Request):
     st = request.app.state.state
     if st.chat:
         st.chat.set_llm_chat_summarizer(None)
+        st.chat.chat_summary = None
     return {"detail": "Chat history summarization disabled"}
  
 @app.post("/api/set_summarization_model") 
