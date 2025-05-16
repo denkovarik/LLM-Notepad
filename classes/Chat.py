@@ -33,6 +33,7 @@ class Chat:
         if chat_history_file is not None:
             self.ensure_file_path_exists(chat_history_file)        
         self.chat_history = self.load_chat_history(chat_history_file)
+        self.currect_converstaion = ChatMessageHistory()
         # Create new summary of chat after so many prompts
         self.summarize_chat_countdown = 10000000
         self.chat_summary = None
@@ -149,14 +150,17 @@ class Chat:
         spinner_active = True
         
         light_rag_result = None
+        
+        conversation = self.chat_history
 
         with yaspin(text=AI.get_llm_name() + ': ', spinner='dots', side='right') as spinner:
             try:
                 if self.lightRAG_enabled:
+                    conversation = self.currect_converstaion
                     light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"))
                     print(light_rag_result)
                 for chunk in AI.get_response(prompt=user_input, 
-                                             history=self.chat_history, 
+                                             history=conversation, 
                                              chat_summary=self.chat_summary, 
                                              n_last_messages=self.max_messages_to_feed, 
                                              light_rag_result=light_rag_result):
@@ -175,10 +179,12 @@ class Chat:
         # Add user message to history and file
         user_message = HumanMessage(content=user_input)
         self.chat_history.add_message(user_message)
+        self.currect_converstaion.add_message(user_message)
         self.append_message_to_history_file(user_message, self.chat_history_file)
         # Add LLM's response to history and file
         assistant_message = AIMessage(content=response)
         self.chat_history.add_message(assistant_message)
+        self.currect_converstaion.add_message(assistant_message)
         self.append_message_to_history_file(assistant_message, self.chat_history_file)   
 
         if self.llm_chat_summarizer is not None:

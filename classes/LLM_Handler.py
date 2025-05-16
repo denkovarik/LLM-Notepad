@@ -58,6 +58,8 @@ class LLM_Handler:
                 for message in last_n_messages
             ]
             
+        print(len(messages))
+            
         if history and chat_summary is not None:
             messages.append({"role": "system", "content": 'Please use the provided chat summary and the chat history to respond to the following user prompt.'})
             
