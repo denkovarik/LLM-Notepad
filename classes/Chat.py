@@ -8,6 +8,7 @@ from typing import List, Optional
 import configparser
 from yaspin import yaspin
 import asyncio
+from tqdm import tqdm
 from classes.Local_LLM_Handler import Local_LLM_Handler 
 from classes.Grok_Handler import Grok_Handler 
 from classes.ChatGPT_Handler import ChatGPT_Handler
@@ -223,6 +224,16 @@ class Chat:
         user_input = input("You: ").strip()
         return user_input
         
+    def enable_light_rag(self):
+        self.light_rag_enabled = False
+        
+    def disable_light_rag(self):
+        self.light_rag_enabled = False
+        self.light_rag_working_dir = None
+        self.lightRAG_llm_model_name = None
+        self.lightRAG_embed_model_name = None
+        self.lightRAG = None
+        
     def initialize_light_rag(self):
         """
         Sets up and initializes Light RAG for the Chat
@@ -237,11 +248,7 @@ class Chat:
             print('Using ChatGPT for Light RAG')
             self.lightRAG_llm_model_name = 'ChatGPT'
             self.lightRAG_embed_model_name = 'ChatGPT'
-            self.light_rag_working_dir = os.path.join(dir_path, 'LightRAG_OpenAI')      
-            # Initialize LightRAGOpenAI instance
-            #self.lightRAG = LightRAG_OpenAI(
-            #    working_dir=self.light_rag_working_dir,
-            #)        
+            self.light_rag_working_dir = os.path.join(dir_path, 'LightRAG_OpenAI')           
         else: 
             print('Using Ollama for Light RAG')
             self.light_rag_working_dir = os.path.join(dir_path, 'LightRAG_Ollama')
@@ -253,8 +260,37 @@ class Chat:
         # Initialize RAG instance
         self.lightRAG.initialize()
         # Read Text
+        #with open(self.chat_history_file, "r", encoding="utf-8") as f:
+        #    self.lightRAG.insert(f.read())
+        
+        prompt_responses = []
+        
         with open(self.chat_history_file, "r", encoding="utf-8") as f:
-            self.lightRAG.insert(f.read())
+            # Create an iterator from the file object
+            lines = iter(f)
+            
+            # Loop over pairs of lines
+            while True:
+                try:
+                    # Read the first line
+                    line1 = next(lines)
+                    
+                    promp_response = '' + line1
+                    
+                    # Try to read the second line
+                    try:
+                        line2 = next(lines)
+                        prompt_responses.append(line1 + line2)
+                    except StopIteration:
+                        prompt_responses.append(line1)
+                        break  # Exit the loop since there are no more lines
+                    
+                except StopIteration:
+                    # If we can't even get the first line, we're done
+                    break
+                    
+        for promp_response in tqdm(prompt_responses, desc="Loading Chat into Light RAG System... "):
+            self.lightRAG.insert(promp_response)
             
     def load_chat_history(self, chat_history_file):
         """
@@ -284,10 +320,10 @@ class Chat:
         return history
         
     def lightRAG_enabled(self):
-        #if self.lightRAG_llm_model_name is not None:
-        #    return True
-        #return False
-        return self.light_rag_enabled
+        if self.lightRAG is not None and self.lightRAG_llm_model_name is not None:
+            return True
+        self.light_rag_enabled = False
+        return False
         
     def summarize_history_enabled(self):
         """
