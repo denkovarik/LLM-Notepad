@@ -45,9 +45,9 @@ class LLM_Handler:
             messages.append({"role": "system", "content": 'The following is a summary of the current chat:'})
             messages.append({"role": "system", "content": chat_summary})
             
-        #if light_rag_rslt is not None:
-        #    messages.append({"role": "system", "content": 'The following information has been retrieved from the chat history:'})
-        #    messages.append({"role": "system", "content": light_rag_rslt})
+        if light_rag_rslt is not None:
+            messages.append({"role": "system", "content": 'The following information has been retrieved from the chat history using the Light RAG system. This information is for your reference if necessary. This information may or may not be needed in order to properly respond to the user prompt.'})
+            messages.append({"role": "system", "content": light_rag_rslt})
         
         if history:
             messages.append({"role": "system", "content": 'The following is part or all of the current Chat History.'})

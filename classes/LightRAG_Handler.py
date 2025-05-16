@@ -178,9 +178,32 @@ class LightRAG_Local(LightRAG_Interface):
         
         return rag
 
-    def query(self, query, param):
+    def query(self, user_prompt, param):
+        light_rag_query = '''\
+        ... You are an AI assistant with access to a vast knowledge base of information stored in a text file related to the chat history.
+        ... Your goal is to provide the most accurate and comprehensive response to the user's query by utilizing all relevant information from the file.
+        ...
+        ... Please adhere to the following guidelines when processing the user's query:
+        ... 1. **Maximize Information Retrieval:** Use all available data from the text file to answer the user's query. This includes:
+        ...    - Relevant conversation history between the user and the AI assistant.
+        ...    - Any documents or information indexed in the file that pertains to the user's request.
+        ... 2. **Contextual Understanding:** Ensure that your response provides enough context for any Large Language Model to understand the conversation's background, trajectory, and key topics.
+        ... 3. **Comprehensive Summary:** When summarizing, cover:
+        ...    - Key points from the conversation.
+        ...    - Relevant snippets or summaries from any documents or data indexed in the file.
+        ... 4. **Accuracy and Factual Grounding:** Base your answers on the information available in the file to ensure factual accuracy.
+        ... 5. **Third-Person Perspective:** Maintain a third-person perspective when discussing the conversation or summarizing information.
+        ... 6. **Refer to the AI Assistant:** If there are references to responses from the AI in the chat history, refer to that AI as 'the AI'.
+        ...
+        ... Please respond to the following user query with the most comprehensive and accurate information you can provide from the text file: 
+        ... ----------------------
+        ... {user_query}
+        ... ----------------------\
+        ... '''.format(user_query=user_prompt)
+        
+        self.rag = asyncio.run(self.initialize_rag())
         if self.rag:
-            return self.rag.query(query, param)
+            return self.rag.query(light_rag_query, param)
         else:
             raise Exception("LightRAG instance not initialized")
 

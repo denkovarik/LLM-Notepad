@@ -149,17 +149,12 @@ class Chat:
         spinner_active = True
         
         light_rag_result = None
-        #if self.lightRAG_enabled and self.lightRAG is not None:
-        #    with yaspin(text='Light RAG: ', spinner='dots', side='right') as spinner:
-        #        try:
-        #            light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"))
-        #            print(light_rag_result)
-        #        except Exception as e:
-        #            spinner.stop()  # Stop spinner on error
-        #            raise e
 
         with yaspin(text=AI.get_llm_name() + ': ', spinner='dots', side='right') as spinner:
             try:
+                if self.lightRAG_enabled:
+                    light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"))
+                    print(light_rag_result)
                 for chunk in AI.get_response(prompt=user_input, 
                                              history=self.chat_history, 
                                              chat_summary=self.chat_summary, 
