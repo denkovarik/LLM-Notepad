@@ -27,7 +27,7 @@ class Local_LLM_Handler(LLM_Handler):
                      history: Optional[ChatMessageHistory] = None, 
                      chat_summary: str = None, 
                      n_last_messages: int = 10, 
-                     reference_files: set = None) -> str:
+                     light_rag_result: str = None) -> str:
         """
         Get a response from the local LLM based on the prompt and conversation history with streaming and a spinner.
 

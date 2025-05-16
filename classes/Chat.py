@@ -157,8 +157,7 @@ class Chat:
             try:
                 if self.lightRAG_enabled:
                     conversation = self.currect_converstaion
-                    light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"))
-                    print(light_rag_result)
+                    light_rag_result = self.lightRAG.query(user_input, QueryParam(mode="hybrid"), chat_summary=self.chat_summary)
                 for chunk in AI.get_response(prompt=user_input, 
                                              history=conversation, 
                                              chat_summary=self.chat_summary, 

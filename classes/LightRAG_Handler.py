@@ -178,7 +178,7 @@ class LightRAG_Local(LightRAG_Interface):
         
         return rag
 
-    def query(self, user_prompt, param):
+    def query(self, user_prompt, param, chat_summary='No Chat Summary Available'):        
         light_rag_query = '''\
         ... You are an AI assistant with access to a vast knowledge base of information stored in a text file related to the chat history.
         ... Your goal is to provide the most accurate and comprehensive response to the user's query by utilizing all relevant information from the file.
@@ -195,11 +195,18 @@ class LightRAG_Local(LightRAG_Interface):
         ... 5. **Third-Person Perspective:** Maintain a third-person perspective when discussing the conversation or summarizing information.
         ... 6. **Refer to the AI Assistant:** If there are references to responses from the AI in the chat history, refer to that AI as 'the AI'.
         ...
+        ... For your reference, below is the summary of the entire chat history (if available). 
+        ... ----------------------
+        ... {chat_summary}
+        ... ----------------------
+        ...
         ... Please respond to the following user query with the most comprehensive and accurate information you can provide from the text file: 
         ... ----------------------
         ... {user_query}
         ... ----------------------\
-        ... '''.format(user_query=user_prompt)
+        ... '''.format(chat_summary=chat_summary, user_query=user_prompt)
+        
+        print(light_rag_query)
         
         self.rag = asyncio.run(self.initialize_rag())
         if self.rag:

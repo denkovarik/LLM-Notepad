@@ -57,9 +57,7 @@ class LLM_Handler:
                 {"role": "user" if isinstance(message, HumanMessage) else "assistant", "content": message.content}
                 for message in last_n_messages
             ]
-            
-        print(len(messages))
-            
+                        
         if history and chat_summary is not None:
             messages.append({"role": "system", "content": 'Please use the provided chat summary and the chat history to respond to the following user prompt.'})
             
@@ -73,8 +71,7 @@ class LLM_Handler:
     def get_response(self, prompt: str, 
                      history: Optional[ChatMessageHistory] = None, 
                      chat_summary: str = None, 
-                     n_last_messages: int = 10, 
-                     reference_files: str = None, 
+                     n_last_messages: int = 10,  
                      light_rag_result: str = None) -> str:
         """
         Get a response from LLM based on the prompt and conversation history.
