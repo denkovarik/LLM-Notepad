@@ -205,9 +205,7 @@ class LightRAG_Local(LightRAG_Interface):
         ... {user_query}
         ... ----------------------\
         ... '''.format(chat_summary=chat_summary, user_query=user_prompt)
-        
-        print(light_rag_query)
-        
+                
         self.rag = asyncio.run(self.initialize_rag())
         if self.rag:
             return self.rag.query(light_rag_query, param)
