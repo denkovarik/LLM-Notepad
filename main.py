@@ -261,7 +261,10 @@ class LightRAGToggle(BaseModel):
 @app.post("/api/set_light_rag")
 def set_light_rag(selection: LightRAGToggle, request: Request):
     st = request.app.state.state
-    st.chat.light_rag_enabled = selection.lightRAGEnabled
+    if selection.lightRAGEnabled:
+        st.chat.enable_light_rag()
+    else:
+        st.chat.disable_light_rag()
     message = "Que?"
     if selection.lightRAGEnabled:
         message = {"detail": "Light RAG has been Enabled"}
