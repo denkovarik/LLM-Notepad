@@ -260,37 +260,37 @@ class Chat:
         # Initialize RAG instance
         self.lightRAG.initialize()
         # Read Text
-        #with open(self.chat_history_file, "r", encoding="utf-8") as f:
-        #    self.lightRAG.insert(f.read())
-        
-        prompt_responses = []
-        
         with open(self.chat_history_file, "r", encoding="utf-8") as f:
-            # Create an iterator from the file object
-            lines = iter(f)
-            
-            # Loop over pairs of lines
-            while True:
-                try:
-                    # Read the first line
-                    line1 = next(lines)
-                    
-                    promp_response = '' + line1
-                    
-                    # Try to read the second line
-                    try:
-                        line2 = next(lines)
-                        prompt_responses.append(line1 + line2)
-                    except StopIteration:
-                        prompt_responses.append(line1)
-                        break  # Exit the loop since there are no more lines
-                    
-                except StopIteration:
-                    # If we can't even get the first line, we're done
-                    break
-                    
-        for promp_response in tqdm(prompt_responses, desc="Loading Chat into Light RAG System... "):
-            self.lightRAG.insert(promp_response)
+            self.lightRAG.insert(f.read())
+        
+        #prompt_responses = []
+        
+        #with open(self.chat_history_file, "r", encoding="utf-8") as f:
+        #    # Create an iterator from the file object
+        #    lines = iter(f)
+        #    
+        #    # Loop over pairs of lines
+        #    while True:
+        #        try:
+        #            # Read the first line
+        #            line1 = next(lines)
+        #            
+        #            promp_response = '' + line1
+        #            
+        #            # Try to read the second line
+        #            try:
+        #                line2 = next(lines)
+        #                prompt_responses.append(line1 + line2)
+        #            except StopIteration:
+        #                prompt_responses.append(line1)
+        #                break  # Exit the loop since there are no more lines
+        #            
+        #        except StopIteration:
+        #            # If we can't even get the first line, we're done
+        #            break
+        #            
+        #for promp_response in tqdm(prompt_responses, desc="Loading Chat into Light RAG System... "):
+        #    self.lightRAG.insert(promp_response)
             
     def load_chat_history(self, chat_history_file):
         """
