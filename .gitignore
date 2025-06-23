@@ -130,6 +130,9 @@ cython_debug/
 # JetBrains IDEs
 .idea/
 
+# LightRAG
+LightRAG/
+
 # Chats
 chats/
 
